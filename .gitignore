@@ -1,0 +1,4 @@
+.DS_Store
+__pycache__/
+# generata da genera_pagina_html.py
+pagina/
