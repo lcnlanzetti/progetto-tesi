@@ -34,9 +34,11 @@ COORDINATE = {
 # Quanti giri dello scenario 1 mostrare nella tabella della pagina
 SEQUENZE_IN_CLASSIFICA = 12
 
-# Nel modello di pagina c'è la scritta /*__DATI__*/ null: questo script
-# la sostituisce con i risultati. Va bene anche con degli spazi in mezzo.
-SEGNAPOSTO_DATI = re.compile(r"/\*__DATI__\*/\s*null")
+# Nel modello di pagina c'è la riga  const DATI = /*__DATI__*/ null;
+# questo script sostituisce "/*__DATI__*/ null" con i risultati.
+# Si cerca anche "const DATI =" davanti, così una scritta uguale messa
+# per esempio in un commento non viene presa per sbaglio.
+SEGNAPOSTO_DATI = re.compile(r"(const DATI\s*=\s*)/\*__DATI__\*/\s*null")
 
 # Le righe del modello che caricano i file di grafica e i programmi:
 # vengono sostituite con il contenuto di quei file.
@@ -143,12 +145,15 @@ def includi_file_esterni(html, cartella):
 
 def inserisci_dati(html, dati):
     """Scrive i risultati nella pagina, al posto della scritta /*__DATI__*/ null."""
-    if not SEGNAPOSTO_DATI.search(html):
-        raise ValueError("Segnaposto /*__DATI__*/ null non trovato nel modello.")
+    trovati = len(SEGNAPOSTO_DATI.findall(html))
+    if trovati != 1:
+        raise ValueError(
+            "Nel modello deve esserci una sola riga 'const DATI = /*__DATI__*/ null', "
+            f"trovate: {trovati}.")
     # JSON è un formato di testo che i programmi della pagina sanno leggere
     testo_json = json.dumps(dati, ensure_ascii=False)
     # si usa una funzione perché un eventuale "\" nel testo resti com'è
-    return SEGNAPOSTO_DATI.sub(lambda _: testo_json, html, count=1)
+    return SEGNAPOSTO_DATI.sub(lambda m: m.group(1) + testo_json, html)
 
 
 def main():
