@@ -48,7 +48,7 @@ const GRUPPI_DI_CONTROLLI = [
         max: 2.6,
         passo: 0.01,
         formatta: (v) => formattaNumero(v, 2) + " €/l",
-        fonte: "MIMIT, Lombardia, 13/10/2026: 2,247 €/l IVA inclusa",
+        fonte: "MIMIT, Lombardia, 16/11/2026: 2,202 €/l IVA inclusa",
       },
       {
         chiave: "costo_orario",

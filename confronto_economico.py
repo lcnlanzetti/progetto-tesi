@@ -23,16 +23,17 @@ Per avviarlo:  python3 confronto_economico.py
 from enumerazione_percorsi import CLIENTI, carico, scenario_1, scenario_2
 
 # ---------------------------------------------------------------------------
-# 1. PARAMETRI DI COSTO (valori di riferimento, ottobre 2026)
+# 1. PARAMETRI DI COSTO (valori di riferimento, novembre 2026)
 # ---------------------------------------------------------------------------
 
-# Prezzo del gasolio al distributore self in Lombardia: 2,247 €/l con IVA
-# (dato del Ministero, MIMIT, 13/10/2026). Togliendo l'IVA del 22%:
-# 2,247 / 1,22 = 1,84 €/l.
-PREZZO_GASOLIO = round(2.247 / 1.22, 2)  # €/l
+# Prezzo del gasolio al distributore self in Lombardia: 2,202 €/l con IVA
+# (dato del Ministero, MIMIT, 16/11/2026). Togliendo l'IVA del 22%:
+# 2,202 / 1,22 = 1,80 €/l.
+PREZZO_GASOLIO = round(2.202 / 1.22, 2)  # €/l
 
 # Quanto costa all'impresa un'ora di lavoro di un autista di furgone.
-# Le tabelle del Ministero del Lavoro 2026 vanno da 22,64 a 30,27 €/h.
+# Le tabelle del Ministero del Lavoro 2026 (decreto n. 135 del 19/12/2025)
+# vanno da 22,64 a 30,27 €/h.
 COSTO_ORARIO_AUTISTA = 25.0  # €/h
 
 # Tempi di lavoro
