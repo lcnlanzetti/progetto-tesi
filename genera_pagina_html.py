@@ -1,15 +1,15 @@
 """
-Project Work – Traccia 23
-Generazione della pagina HTML dei risultati.
+Crea la pagina web che mostra i risultati.
 
-Lo script riusa i moduli enumerazione_percorsi.py e confronto_economico.py,
-raccoglie grafo, percorsi ottimi e parametri di costo, e li inserisce nel
-modello template_pagina.html. I fogli di stile (css/) e gli script (js/)
-richiamati dal modello vengono copiati dentro la pagina, così il risultato
-è un unico file autonomo, pagina/index.html, apribile con qualsiasi
-browser anche senza connessione.
+Prende i risultati di enumerazione_percorsi.py (i giri più corti) e di
+confronto_economico.py (i costi), e li inserisce nel modello di pagina
+template_pagina.html. Copia dentro la pagina anche la grafica (cartella css/)
+e i programmi che la fanno funzionare (cartella js/).
 
-Uso:  python3 genera_pagina_html.py
+Il risultato è un solo file, pagina/index.html, che si apre con un doppio
+clic in qualsiasi browser, anche senza internet.
+
+Per avviarlo:  python3 genera_pagina_html.py
 """
 
 import json
@@ -19,8 +19,9 @@ from pathlib import Path
 import enumerazione_percorsi as ep
 import confronto_economico as ce
 
-# Coordinate (lat, lon) dei centri dei comuni, usate solo per disegnare
-# il grafo in proporzione: le distanze del modello restano quelle stradali.
+# Posizione sulla mappa (latitudine, longitudine) di ogni paese.
+# Serve solo a disegnare i paesi al posto giusto nella pagina:
+# per i calcoli si usano sempre i km di strada.
 COORDINATE = {
     "Monno": (46.2116, 10.3399),
     "Incudine": (46.2205, 10.3589),
@@ -30,14 +31,15 @@ COORDINATE = {
     "Malonno": (46.1226, 10.3192),
 }
 
-# Quante sequenze dello scenario 1 mostrare nella tabella della pagina
+# Quanti giri dello scenario 1 mostrare nella tabella della pagina
 SEQUENZE_IN_CLASSIFICA = 12
 
-# Segnaposto nel modello HTML che viene sostituito con i dati.
-# Accetta spazi tra commento e "null", che un formattatore può aggiungere.
+# Nel modello di pagina c'è la scritta /*__DATI__*/ null: questo script
+# la sostituisce con i risultati. Va bene anche con degli spazi in mezzo.
 SEGNAPOSTO_DATI = re.compile(r"/\*__DATI__\*/\s*null")
 
-# Riferimenti a file esterni nel modello, da sostituire con il loro contenuto
+# Le righe del modello che caricano i file di grafica e i programmi:
+# vengono sostituite con il contenuto di quei file.
 FOGLIO_DI_STILE = re.compile(r'<link rel="stylesheet" href="([^"]+)"\s*/?>')
 SCRIPT_ESTERNO = re.compile(r'<script src="([^"]+)"></script>')
 
@@ -45,10 +47,11 @@ SCRIPT_ESTERNO = re.compile(r'<script src="([^"]+)"></script>')
 # ---------------------------------------------------------------------------
 # 1. DATI PER LA PAGINA
 # ---------------------------------------------------------------------------
-# I nomi delle chiavi sono quelli letti dagli script in js/ (oggetto DATI).
+# I programmi in js/ leggono questi dati con questi nomi esatti:
+# se si cambia un nome qui, va cambiato anche lì.
 
 def dati_nodi():
-    """Deposito e clienti, con coordinate e kg richiesti (0 per il deposito)."""
+    """Deposito e clienti, con posizione sulla mappa e kg da consegnare (0 per il deposito)."""
     return [
         {
             "id": indice,
@@ -68,7 +71,7 @@ def dati_scenario_1(s1):
         "sequenza": list(s1["sequenza"]),
         "km": round(s1["km"], 1),
         "esaminate": s1["esaminate"],
-        "n_ottime": len(giri_ottimi),  # sequenze a pari merito con la migliore
+        "n_ottime": len(giri_ottimi),  # quanti giri sono lunghi quanto il migliore
         "classifica": [
             {"km": round(giro["km"], 1), "sequenza": list(giro["sequenza"])}
             for giro in s1["classifica"][:SEQUENZE_IN_CLASSIFICA]
@@ -127,7 +130,7 @@ def raccogli_dati():
 # ---------------------------------------------------------------------------
 
 def includi_file_esterni(html, cartella):
-    """Sostituisce i <link> ai fogli di stile e gli <script src> con il loro contenuto."""
+    """Copia dentro la pagina il contenuto dei file css/ e js/ che il modello richiama."""
     def leggi(percorso_relativo):
         return (cartella / percorso_relativo).read_text(encoding="utf-8")
 
@@ -139,11 +142,12 @@ def includi_file_esterni(html, cartella):
 
 
 def inserisci_dati(html, dati):
-    """Mette i dati (in formato JSON) al posto del segnaposto del modello."""
+    """Scrive i risultati nella pagina, al posto della scritta /*__DATI__*/ null."""
     if not SEGNAPOSTO_DATI.search(html):
         raise ValueError("Segnaposto /*__DATI__*/ null non trovato nel modello.")
+    # JSON è un formato di testo che i programmi della pagina sanno leggere
     testo_json = json.dumps(dati, ensure_ascii=False)
-    # si passa una funzione, così eventuali "\" nel JSON non vengono interpretati
+    # si usa una funzione perché un eventuale "\" nel testo resti com'è
     return SEGNAPOSTO_DATI.sub(lambda _: testo_json, html, count=1)
 
 

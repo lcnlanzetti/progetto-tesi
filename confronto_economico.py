@@ -1,21 +1,23 @@
 """
-Project Work – Traccia 23
-Confronto economico dei due scenari di consegna.
+Calcola quanto costa ogni giorno ciascuno dei due modi di fare le consegne,
+e quale conviene.
 
-Usa i percorsi ottimi trovati da enumerazione_percorsi.py e calcola,
-per ciascuno scenario, il costo giornaliero di un giro di consegne:
+Prende i giri più corti trovati da enumerazione_percorsi.py e, per ognuno,
+somma quattro voci di costo:
 
-    C_totale = C_fisso_veicoli
-             + km * (costo_carburante_per_km + altri_costi_per_km)
-             + ore_autisti * costo_orario_autista
+    costo del giorno = costo fisso dei furgoni (leasing, assicurazione, bollo)
+                     + carburante
+                     + usura e manutenzione (gomme, tagliandi)
+                     + stipendio degli autisti per le ore di lavoro
 
-Poi analizza come cambia la convenienza al variare delle voci di costo.
-Tutti gli importi sono in euro, IVA esclusa (l'impresa la detrae).
+Poi mostra cosa succede se cambiano il prezzo del gasolio o il costo
+degli autisti. Tutti gli importi sono in euro, senza IVA, perché l'impresa
+la recupera.
 
-Lo stesso modello è riprodotto in JavaScript in js/modello.js,
-così la pagina web può ricalcolarlo quando si spostano i cursori.
+Gli stessi calcoli sono ripetuti in js/modello.js, così la pagina web può
+rifarli subito quando si spostano i cursori.
 
-Uso:  python3 confronto_economico.py
+Per avviarlo:  python3 confronto_economico.py
 """
 
 from enumerazione_percorsi import CLIENTI, carico, scenario_1, scenario_2
@@ -24,32 +26,33 @@ from enumerazione_percorsi import CLIENTI, carico, scenario_1, scenario_2
 # 1. PARAMETRI DI COSTO (valori di riferimento, ottobre 2026)
 # ---------------------------------------------------------------------------
 
-# Gasolio self in Lombardia: 2,247 EUR/l IVA inclusa (MIMIT, 13/10/2026).
-# Al netto dell'IVA al 22%: 2,247 / 1,22 = 1,84 EUR/l.
-PREZZO_GASOLIO = round(2.247 / 1.22, 2)  # EUR/l
+# Prezzo del gasolio al distributore self in Lombardia: 2,247 €/l con IVA
+# (dato del Ministero, MIMIT, 13/10/2026). Togliendo l'IVA del 22%:
+# 2,247 / 1,22 = 1,84 €/l.
+PREZZO_GASOLIO = round(2.247 / 1.22, 2)  # €/l
 
-# Costo orario aziendale di un autista di furgone (CCNL Logistica,
-# tabelle del Ministero del Lavoro 2026: da 22,64 a 30,27 EUR/h).
-COSTO_ORARIO_AUTISTA = 25.0  # EUR/h
+# Quanto costa all'impresa un'ora di lavoro di un autista di furgone.
+# Le tabelle del Ministero del Lavoro 2026 vanno da 22,64 a 30,27 €/h.
+COSTO_ORARIO_AUTISTA = 25.0  # €/h
 
-# Tempi operativi
-VELOCITA_MEDIA = 50          # km/h, percorsi su strada statale (SS42) in Valle Camonica
-TEMPO_SCARICO = 10           # minuti per ogni cliente
-TEMPO_CARICO = 15            # minuti al deposito per ogni veicolo
+# Tempi di lavoro
+VELOCITA_MEDIA = 50   # km/h, strada statale SS42 in Valle Camonica
+TEMPO_SCARICO = 10    # minuti per scaricare la merce da ogni cliente
+TEMPO_CARICO = 15     # minuti per caricare ogni furgone al deposito
 
-# Giorni di consegna in un anno, per la proiezione annua
+# Giorni di consegna in un anno, per calcolare il costo annuale
 GIORNI_ANNO = 250
 
-# Caratteristiche dei veicoli.
-# Scenario 1: un furgone medio (portata utile ampiamente sopra 300 kg).
-# Scenario 2: due furgoni compatti identici (portata limitata a 150 kg
-# per ipotesi del modello, ad es. vani refrigerati di piccole dimensioni).
+# I due tipi di furgone.
+# Scenario 1: un furgone medio, che porta molto più di 300 kg.
+# Scenario 2: due furgoni compatti uguali. Si suppone che portino al massimo
+# 150 kg ciascuno, ad esempio perché hanno un piccolo vano frigorifero.
 VEICOLI = {
     "furgone_medio": {
-        "consumo_l_100km": 9.0,   # litri ogni 100 km
-        "altri_costi_km": 0.08,   # pneumatici, manutenzione, usura (EUR/km)
-        "costo_fisso_giorno": 35.0,  # ammortamento/leasing, assicurazione,
-                                      # bollo, ripartiti su 22 giorni/mese
+        "consumo_l_100km": 9.0,   # litri di gasolio ogni 100 km
+        "altri_costi_km": 0.08,   # gomme, manutenzione e usura, in € per km
+        "costo_fisso_giorno": 35.0,  # leasing, assicurazione e bollo,
+                                      # divisi per 22 giorni lavorativi al mese
     },
     "furgone_compatto": {
         "consumo_l_100km": 6.5,
@@ -58,8 +61,8 @@ VEICOLI = {
     },
 }
 
-# Voci prodotte da costo_giro(), nell'ordine in cui vengono sommate
-VOCI = ["km", "ore", "fisso", "carburante", "altri_km", "autista", "totale"]
+# I valori calcolati da costo_giro() per ogni furgone
+VOCI =["km", "ore", "fisso", "carburante", "altri_km", "autista", "totale"]
 
 
 # ---------------------------------------------------------------------------
@@ -68,8 +71,8 @@ VOCI = ["km", "ore", "fisso", "carburante", "altri_km", "autista", "totale"]
 
 def costo_giro(km, n_clienti, veicolo, prezzo_gasolio, costo_orario):
     """
-    Costo e durata di un singolo veicolo che esegue un giro.
-    Restituisce un dizionario con le chiavi elencate in VOCI.
+    Quanto costa e quanto dura il giro di un singolo furgone.
+    Restituisce un dizionario con i valori elencati in VOCI.
     """
     caratteristiche = VEICOLI[veicolo]
 
@@ -95,21 +98,21 @@ def costo_giro(km, n_clienti, veicolo, prezzo_gasolio, costo_orario):
 
 
 def somma(giri):
-    """Somma voce per voce i costi di più veicoli."""
+    """Somma i costi di più furgoni, una voce alla volta."""
     return {voce: sum(giro[voce] for giro in giri) for voce in VOCI}
 
 
 def valuta_scenari(prezzo_gasolio=PREZZO_GASOLIO,
                    costo_orario=COSTO_ORARIO_AUTISTA):
     """
-    Calcola i costi dei due scenari. Restituisce tre valori:
-      costi_1      costi dello scenario 1 (un furgone medio)
-      costi_2      costi dello scenario 2, sommati sui due furgoni compatti
-      giri_2       costi dei due furgoni dello scenario 2, presi uno per uno
+    Calcola i costi dei due scenari. Restituisce tre risultati:
+      costi_1   lo scenario 1 (un furgone medio)
+      costi_2   lo scenario 2, sommando i due furgoni compatti
+      giri_2    i due furgoni dello scenario 2, ciascuno per conto suo
 
-    In più, "durata" indica dopo quanto tempo tutte le consegne sono finite:
-    nello scenario 2 i due furgoni viaggiano in parallelo, quindi conta
-    il giro più lungo.
+    "durata" dice dopo quanto tempo tutte le consegne sono finite.
+    Nello scenario 2 i due furgoni partono insieme, quindi si finisce
+    quando torna quello con il giro più lungo.
     """
     s1 = scenario_1()
     migliore_2 = scenario_2()["migliore"]
@@ -130,23 +133,27 @@ def valuta_scenari(prezzo_gasolio=PREZZO_GASOLIO,
 
 
 # ---------------------------------------------------------------------------
-# 3. ANALISI DI SENSIBILITÀ E PUNTI DI PAREGGIO
+# 3. COSA CAMBIA SE CAMBIANO I COSTI
 # ---------------------------------------------------------------------------
 
 def differenza(**parametri):
-    """Costo scenario 2 meno costo scenario 1 (positivo = conviene il 1)."""
+    """
+    Quanto costa in più lo scenario 2 rispetto allo scenario 1.
+    Se il risultato è positivo conviene lo scenario 1, se è negativo il 2.
+    """
     costi_1, costi_2, _ = valuta_scenari(**parametri)
     return costi_2["totale"] - costi_1["totale"]
 
 
 def pareggio_costo_fisso_medio():
     """
-    Costo fisso giornaliero del furgone medio oltre il quale
-    diventa conveniente lo scenario 2 (a parità delle altre voci).
+    Fino a quanto può salire il costo fisso giornaliero del furgone medio
+    prima che i due furgoni piccoli diventino più convenienti
+    (lasciando invariati tutti gli altri costi).
 
-    Il costo fisso si somma al totale dello scenario 1 senza influire
-    su nient'altro: basta quindi aumentarlo esattamente della differenza
-    attuale tra i due scenari.
+    Il costo fisso si aggiunge al totale dello scenario 1 e non cambia
+    nient'altro, quindi basta sommargli la differenza di oggi tra i due
+    scenari: a quel punto i costi sono uguali.
     """
     return VEICOLI["furgone_medio"]["costo_fisso_giorno"] + differenza()
 
@@ -165,6 +172,7 @@ def hhmm(ore):
 
 
 def eur(x):
+    """Importo in euro allineato a destra: 98.39 -> "   98.39 EUR"."""
     return f"{x:8.2f} EUR"
 
 
@@ -205,13 +213,13 @@ def stampa_dettaglio_scenario_2(giri_2):
 
 
 def stampa_costo_per_kg(costi_1, costi_2):
-    kg = carico(CLIENTI)  # kg consegnati in un giorno (uguale nei due scenari)
+    kg = carico(CLIENTI)  # kg consegnati in un giorno, uguali nei due scenari
     print(f"\nCosto per kg consegnato: scenario 1 {costi_1['totale']/kg:.3f} EUR/kg, "
           f"scenario 2 {costi_2['totale']/kg:.3f} EUR/kg")
 
 
 def stampa_sensibilita(titolo, nome_parametro, valori, formatta):
-    """Ricalcola i due scenari cambiando un solo parametro alla volta."""
+    """Rifà il calcolo con diversi valori di un solo costo, lasciando fermi gli altri."""
     print(f"\nSENSIBILITÀ – {titolo}")
     for valore in valori:
         costi_1, costi_2, _ = valuta_scenari(**{nome_parametro: valore})
@@ -243,7 +251,7 @@ def stampa():
     )
     stampa_sensibilita(
         "costo orario autista", "costo_orario",
-        [20, 22.64, 25, 30.27, 35],  # 22,64 e 30,27: estremi delle tabelle ministeriali
+        [20, 22.64, 25, 30.27, 35],  # 22,64 e 30,27: minimo e massimo delle tabelle del Ministero
         lambda h: f"{h:5.2f} EUR/h",
     )
 

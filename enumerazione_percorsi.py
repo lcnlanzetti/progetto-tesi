@@ -1,16 +1,18 @@
 """
-Project Work – Traccia 23
-Pianificazione dei percorsi di consegna con enumerazione completa (TSP e VRP).
+Trova il giro di consegne più corto, in km.
 
-Deposito: Monno. Clienti: Incudine, Edolo, Vezza d'Oglio, Vione, Malonno.
+I furgoni partono dal deposito di Monno, consegnano a cinque clienti
+(Incudine, Edolo, Vezza d'Oglio, Vione, Malonno) e tornano a Monno.
+Si confrontano due modi di organizzare le consegne:
 
-Scenario 1: un solo veicolo da 300 kg serve tutti i clienti (TSP).
-Scenario 2: due veicoli identici da 150 kg (VRP con vincolo di capacità).
+  Scenario 1  un solo furgone da 300 kg visita tutti i clienti.
+  Scenario 2  due furgoni da 150 kg si dividono i clienti.
 
-Nessuna euristica e nessun solutore: il programma genera ed esamina
-tutte le soluzioni ammissibili e sceglie quella con meno km.
+Il programma non usa scorciatoie: prova tutte le combinazioni possibili,
+calcola i km di ognuna e tiene la più corta. Con soli cinque clienti
+le combinazioni sono poche e il calcolo è immediato.
 
-Uso:  python3 enumerazione_percorsi.py
+Per avviarlo:  python3 enumerazione_percorsi.py
 """
 
 from itertools import combinations, permutations
@@ -19,11 +21,12 @@ from itertools import combinations, permutations
 # 1. DATI DEL PROBLEMA
 # ---------------------------------------------------------------------------
 
-# Nodo 0 = deposito, nodi 1-5 = clienti
+# Ogni luogo è indicato da un numero: 0 è il deposito, da 1 a 5 i clienti.
 nodi = ["Monno", "Incudine", "Edolo", "Vezza d'Oglio", "Vione", "Malonno"]
 
-# Matrice delle distanze stradali in km (simmetrica):
-# distanze[i][j] = km per andare dal nodo i al nodo j
+# Km di strada tra ogni coppia di luoghi.
+# Si legge così: distanze[2][5] = km da Edolo (2) a Malonno (5).
+# La tabella è simmetrica: andata e ritorno hanno la stessa lunghezza.
 distanze = [
     # Monno Incud. Edolo  Vezza  Vione  Malonno
     [0.0,  3.1,   6.6,   7.0,   11.4,  14.9],  # Monno (deposito)
@@ -34,16 +37,19 @@ distanze = [
     [14.9, 13.8,  8.3,   17.7,  22.1,  0.0],   # Malonno
 ]
 
-# Quantità da consegnare a ciascun cliente (kg, dati simulati)
+# Kg di merce da consegnare a ogni cliente (valori inventati per l'esempio).
 domanda = {1: 40, 2: 70, 3: 50, 4: 30, 5: 60}
 
 DEPOSITO = 0
 CLIENTI = list(domanda.keys())
 
-CAPACITA_SCENARIO_1 = 300  # kg, l'unico veicolo
-CAPACITA_SCENARIO_2 = 150  # kg, ciascuno dei due veicoli
+# Quanti kg può portare al massimo un furgone
+CAPACITA_SCENARIO_1 = 300  # l'unico furgone dello scenario 1
+CAPACITA_SCENARIO_2 = 150  # ciascuno dei due furgoni dello scenario 2
 
-# Tolleranza per confrontare km calcolati come somme di numeri decimali
+# Il computer somma i decimali con piccolissimi errori di arrotondamento
+# (es. 0.1 + 0.2 = 0.30000000000000004). Due percorsi che differiscono
+# meno di questa quantità sono considerati lunghi uguali.
 TOLLERANZA_KM = 1e-9
 
 
@@ -52,14 +58,18 @@ TOLLERANZA_KM = 1e-9
 # ---------------------------------------------------------------------------
 
 def giro_completo(sequenza):
-    """Aggiunge partenza e ritorno al deposito: (2, 5) -> [0, 2, 5, 0]."""
+    """
+    Aggiunge la partenza e il ritorno al deposito.
+    Esempio: clienti (2, 5) -> giro [0, 2, 5, 0], cioè Monno, Edolo, Malonno, Monno.
+    """
     return [DEPOSITO] + list(sequenza) + [DEPOSITO]
 
 
 def lunghezza_percorso(sequenza):
-    """Km di un giro: deposito -> clienti nell'ordine dato -> deposito."""
+    """Km totali di un giro che visita i clienti nell'ordine indicato."""
     giro = giro_completo(sequenza)
-    tratti = zip(giro[:-1], giro[1:])  # coppie di nodi consecutivi
+    # tratti: ogni coppia di tappe consecutive, es. (0, 2), (2, 5), (5, 0)
+    tratti = zip(giro[:-1], giro[1:])
     return sum(distanze[da][a] for da, a in tratti)
 
 
@@ -69,15 +79,16 @@ def carico(clienti):
 
 
 def nomi(sequenza):
-    """Percorso leggibile, es. Monno -> Edolo -> Malonno -> Monno."""
+    """Scrive il giro con i nomi dei paesi, es. Monno -> Edolo -> Malonno -> Monno."""
     return " -> ".join(nodi[nodo] for nodo in giro_completo(sequenza))
 
 
 def miglior_giro(clienti):
     """
-    TSP per enumerazione completa: prova tutti gli ordini possibili
-    dei clienti e restituisce (sequenza migliore, km).
-    A parità di km si tiene la prima sequenza trovata.
+    Trova l'ordine di visita più corto per un gruppo di clienti,
+    provando tutti gli ordini possibili uno per uno.
+    Restituisce (ordine migliore, km). Se due ordini hanno gli stessi km
+    si tiene il primo trovato.
     """
     sequenza_migliore, km_minimi = None, float("inf")
     for sequenza in permutations(clienti):
@@ -88,20 +99,21 @@ def miglior_giro(clienti):
 
 
 # ---------------------------------------------------------------------------
-# 3. SCENARIO 1 – UN VEICOLO DA 300 KG (TSP)
+# 3. SCENARIO 1 – UN FURGONE DA 300 KG
 # ---------------------------------------------------------------------------
 
 def scenario_1():
     """
-    Esamina tutte le 5! = 120 sequenze di visita dei clienti.
+    Prova tutti i 120 ordini in cui un solo furgone può visitare
+    i cinque clienti (5 x 4 x 3 x 2 x 1 = 120) e li mette in classifica.
 
     Restituisce un dizionario con:
-      sequenza    ordine di visita migliore (tupla di indici dei clienti)
-      km          lunghezza del giro migliore
-      carico      kg trasportati
-      esaminate   numero di sequenze provate
-      classifica  tutte le sequenze, dalla più corta:
-                  lista di {"km": ..., "sequenza": ...}
+      sequenza    l'ordine di visita più corto (numeri dei clienti)
+      km          i km di quel giro
+      carico      i kg trasportati
+      esaminate   quanti ordini sono stati provati
+      classifica  tutti gli ordini, dal più corto al più lungo,
+                  ciascuno come {"km": ..., "sequenza": ...}
     """
     if carico(CLIENTI) > CAPACITA_SCENARIO_1:
         raise ValueError("Il veicolo non ha capacità sufficiente.")
@@ -110,7 +122,7 @@ def scenario_1():
         {"km": lunghezza_percorso(sequenza), "sequenza": sequenza}
         for sequenza in permutations(CLIENTI)
     ]
-    # sorted è stabile: a parità di km resta l'ordine di generazione
+    # a parità di km, i giri restano nell'ordine in cui sono stati generati
     classifica.sort(key=lambda giro: giro["km"])
 
     migliore = classifica[0]
@@ -124,45 +136,47 @@ def scenario_1():
 
 
 # ---------------------------------------------------------------------------
-# 4. SCENARIO 2 – DUE VEICOLI DA 150 KG (VRP)
+# 4. SCENARIO 2 – DUE FURGONI DA 150 KG
 # ---------------------------------------------------------------------------
 
 def giro_veicolo(clienti):
-    """Giro migliore di un veicolo su un gruppo di clienti."""
+    """Il giro più corto di un furgone che serve il gruppo di clienti indicato."""
     sequenza, km = miglior_giro(clienti)
     return {"sequenza": sequenza, "km": km, "kg": carico(clienti)}
 
 
 def suddivisioni_in_due_gruppi(clienti):
     """
-    Genera tutte le divisioni dei clienti in due gruppi non vuoti.
+    Elenca tutti i modi di dividere i clienti tra i due furgoni,
+    dando ad ognuno almeno un cliente.
 
-    Poiché i veicoli sono identici, {A,B}+{C} e {C}+{A,B} sono la stessa
-    soluzione: per non contarla due volte il primo cliente sta sempre
-    nel gruppo 1, e si sceglie solo chi lo accompagna.
-    Con 5 clienti si ottengono 2^4 - 1 = 15 suddivisioni.
+    I due furgoni sono uguali, quindi dare {Edolo, Vione} al primo e
+    {Malonno} al secondo è la stessa cosa del contrario. Per non contare
+    ogni divisione due volte, il primo cliente va sempre sul furgone 1
+    e si decide solo chi viaggia con lui. In tutto sono 15 divisioni.
     """
     primo, altri = clienti[0], clienti[1:]
     for quanti_compagni in range(len(altri) + 1):
         for compagni in combinations(altri, quanti_compagni):
             gruppo_1 = (primo,) + compagni
             gruppo_2 = tuple(c for c in clienti if c not in gruppo_1)
-            if gruppo_2:  # se è vuoto, un veicolo resterebbe inutilizzato
+            if gruppo_2:  # se il furgone 2 non ha clienti, la divisione non serve
                 yield gruppo_1, gruppo_2
 
 
 def scenario_2():
     """
-    Per ogni suddivisione che rispetta la capacità di entrambi i veicoli
-    si calcola il giro migliore di ciascuno, sempre per enumerazione completa.
+    Prova tutte le divisioni dei clienti tra i due furgoni. Scarta quelle
+    in cui un furgone dovrebbe portare più di 150 kg; per le altre calcola
+    il giro più corto di ciascun furgone e somma i km.
 
     Restituisce un dizionario con:
-      migliore      la soluzione con meno km totali
-      suddivisioni  numero di suddivisioni esaminate
-      scartate      quante superano la capacità di un veicolo
-      ammissibili   tutte le soluzioni valide, dalla più corta:
-                    {"veicoli": [giro_1, giro_2], "km": totale}
-                    dove ogni giro è {"sequenza", "km", "kg"}
+      migliore      la divisione con meno km in totale
+      suddivisioni  quante divisioni sono state provate
+      scartate      quante sono state scartate per il peso
+      ammissibili   le divisioni valide, dalla più corta alla più lunga,
+                    ciascuna come {"veicoli": [giro_1, giro_2], "km": totale}
+                    (ogni giro è {"sequenza", "km", "kg"})
     """
     soluzioni, suddivisioni, scartate = [], 0, 0
 
