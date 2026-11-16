@@ -1,0 +1,2104 @@
+<!doctype html>
+<!--
+  Modello della pagina dei risultati. Da solo non mostra numeri:
+  va completato con "python3 genera_pagina_html.py", che aggiunge i dati
+  e crea il file finale pagina/index.html.
+-->
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Consegne in Alta Valle Camonica – Confronto tra scenari</title>
+    <meta
+      name="description"
+      content="Project Work Traccia 23: percorsi di consegna della Società Agricola F.lli Antonioli e confronto economico tra uno e due veicoli."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M3 26 L12 10 L17 18 L21 13 L29 26 Z' fill='%232F5D46'/%3E%3Ccircle cx='12' cy='10' r='3' fill='%23B5652A'/%3E%3C/svg%3E"
+    />
+    <style>
+/* I colori della pagina (versione chiara e versione scura), i caratteri
+   e le distanze tra gli elementi. Gli altri file CSS usano questi nomi,
+   ad esempio var(--accent), così basta cambiare un colore qui. */
+
+:root,
+[data-theme="light"] {
+  --bg: #f4f1e9;
+  --surface: #fffdf7;
+  --surface-2: #eeeadf;
+  --border: #dcd6c6;
+  --text: #22241e;
+  --muted: #64645a;
+  --faint: #9a9888;
+  --accent: #2f5d46;
+  --accent-soft: #dce7df;
+  --v1: #2c6a8c;
+  --v2: #a9561f;
+  --edge: #c9c3b2;
+  --good: #2f5d46;
+  --warn: #a9561f;
+  --shadow:
+    0 1px 2px rgba(40, 36, 20, 0.06), 0 4px 16px rgba(40, 36, 20, 0.05);
+}
+[data-theme="dark"] {
+  --bg: #14160f;
+  --surface: #1c1f17;
+  --surface-2: #252920;
+  --border: #353a2e;
+  --text: #eceadf;
+  --muted: #a6a496;
+  --faint: #737265;
+  --accent: #8cc3a3;
+  --accent-soft: #263a2e;
+  --v1: #74b4d6;
+  --v2: #e3995f;
+  --edge: #3e4436;
+  --good: #8cc3a3;
+  --warn: #e3995f;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14160f;
+    --surface: #1c1f17;
+    --surface-2: #252920;
+    --border: #353a2e;
+    --text: #eceadf;
+    --muted: #a6a496;
+    --faint: #737265;
+    --accent: #8cc3a3;
+    --accent-soft: #263a2e;
+    --v1: #74b4d6;
+    --v2: #e3995f;
+    --edge: #3e4436;
+    --good: #8cc3a3;
+    --warn: #e3995f;
+    --shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.25);
+  }
+}
+:root {
+  --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.8125rem);
+  --text-sm: clamp(0.8125rem, 0.78rem + 0.2vw, 0.9375rem);
+  --text-base: clamp(0.9375rem, 0.9rem + 0.2vw, 1.0625rem);
+  --text-lg: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  --text-xl: clamp(1.5rem, 1.2rem + 1.2vw, 2.125rem);
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --radius: 10px;
+  --font-sans:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+    Arial, sans-serif;
+  --font-serif:
+    "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+</style>
+    <style>
+/* La struttura della pagina: barra in alto, disposizione dei riquadri
+   sullo schermo, aspetto dei riquadri e note in fondo. */
+
+* {
+  box-sizing: border-box;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+.wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+header.top {
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+}
+.top-inner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) 0;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--accent);
+}
+.brand-text {
+  color: var(--text);
+  line-height: 1.2;
+}
+.brand-text strong {
+  display: block;
+  font-size: var(--text-sm);
+}
+.brand-text span {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.spacer {
+  flex: 1;
+}
+.icon-btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--surface-2);
+}
+.icon-btn:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.intro {
+  padding: var(--space-10) 0 var(--space-6);
+}
+.eyebrow {
+  font-size: var(--text-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 0 0 var(--space-2);
+}
+h1 {
+  font-family: var(--font-serif);
+  font-size: var(--text-xl);
+  font-weight: 600;
+  line-height: 1.15;
+  margin: 0 0 var(--space-3);
+  max-width: 28ch;
+}
+.lead {
+  color: var(--muted);
+  max-width: 70ch;
+  margin: 0;
+}
+
+.grid-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--border);
+}
+.card-head h2 {
+  font-size: var(--text-lg);
+  font-weight: 650;
+  margin: 0;
+}
+.card-body {
+  padding: var(--space-5);
+}
+.hint {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+section.block {
+  margin-top: var(--space-6);
+}
+.two {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+select {
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-2);
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+}
+.note {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin: var(--space-3) 0 0;
+}
+
+footer {
+  margin: var(--space-12) 0 var(--space-8);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+footer p {
+  margin: 0 0 var(--space-2);
+  max-width: 90ch;
+}
+footer a {
+  color: var(--accent);
+}
+</style>
+    <style>
+/* L'aspetto dei singoli elementi: i quattro riquadri in cima, il disegno
+   con i giri, i cursori, le tabelle, le barre dei costi e il grafico. */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow);
+}
+.kpi-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.kpi-value {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  margin-top: var(--space-1);
+  letter-spacing: -0.01em;
+}
+.kpi-sub {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.kpi.verdict {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.kpi.verdict .kpi-value {
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  margin-top: var(--space-2);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.seg {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.graph-wrap {
+  position: relative;
+}
+svg.graph {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.graph .edge {
+  stroke: var(--edge);
+  stroke-width: 1.2;
+}
+.graph .edge-label {
+  font-size: 11px;
+  fill: var(--faint);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+.graph .route {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.graph .node-circle {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.graph .node-depot {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+.graph .node-name {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+.graph .node-kg {
+  font-size: 11px;
+  fill: var(--muted);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+.graph .step {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #fff;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.legend i {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.routes {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.route-card {
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: var(--space-3) var(--space-4);
+}
+.route-card .r-title {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.route-card .r-path {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-5);
+}
+.group-title {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+}
+.ctrl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+.ctrl label {
+  font-size: var(--text-sm);
+}
+.ctrl output {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  font-family: var(--font-mono);
+}
+.ctrl input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 0;
+}
+.ctrl .src {
+  grid-column: 1 / -1;
+  font-size: var(--text-xs);
+  color: var(--faint);
+  margin-top: -2px;
+}
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn:hover {
+  background: var(--surface-2);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+th,
+td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+th {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+td.num,
+th.num {
+  text-align: right;
+  white-space: nowrap;
+}
+tr.total td {
+  font-weight: 700;
+  border-bottom: 0;
+  border-top: 2px solid var(--text);
+}
+tr.best td {
+  background: var(--accent-soft);
+}
+.pos {
+  color: var(--warn);
+}
+.neg {
+  color: var(--good);
+}
+.table-scroll {
+  overflow-x: auto;
+}
+
+.bars {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.bar-row .bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+}
+.bar {
+  display: flex;
+  height: 22px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.bar div {
+  height: 100%;
+  transition: width 0.35s ease;
+}
+.bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-top: var(--space-3);
+}
+.bar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.bar-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+svg.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.chart .axis line,
+.chart .axis path {
+  stroke: var(--border);
+}
+.chart text {
+  font-size: 11px;
+  fill: var(--muted);
+}
+.chart .grid {
+  stroke: var(--border);
+  stroke-dasharray: 2 3;
+}
+</style>
+    <style>
+/* Modifiche per gli schermi piccoli (telefoni e tablet) e per chi ha
+   chiesto al computer di ridurre le animazioni. Viene caricato per ultimo,
+   così queste regole prevalgono sulle altre. */
+
+@media (max-width: 980px) {
+  .grid-main,
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .wrap {
+    padding: 0 var(--space-4);
+  }
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+  .card-body {
+    padding: var(--space-4);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar div {
+    transition: none;
+  }
+}
+</style>
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap top-inner">
+        <div class="brand">
+          <svg
+            width="34"
+            height="34"
+            viewBox="0 0 34 34"
+            fill="none"
+            aria-label="Logo: montagne e percorso di consegna"
+            role="img"
+          >
+            <path
+              d="M2 28 L12 11 L18 20 L23 14 L32 28"
+              stroke="currentColor"
+              stroke-width="2.2"
+              stroke-linejoin="round"
+            />
+            <path
+              d="M6 31 C 12 24, 20 30, 28 23"
+              stroke="var(--v2)"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-dasharray="1 4"
+            />
+            <circle cx="12" cy="11" r="2.6" fill="currentColor" />
+          </svg>
+          <div class="brand-text">
+            <strong>Consegne Alta Valle Camonica</strong>
+            <span>Soc. Agricola F.lli Antonioli · Project Work 23</span>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button
+          class="icon-btn"
+          id="theme"
+          aria-label="Cambia tema chiaro/scuro"
+          title="Cambia tema"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          >
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <div class="intro">
+        <p class="eyebrow">TSP e VRP risolti per enumerazione completa</p>
+        <h1>Un furgone o due? Percorsi e costi delle consegne da Monno</h1>
+        <p class="lead">
+          Il grafo mostra il deposito di Monno e i cinque clienti. Il programma
+          ha esaminato tutte le sequenze possibili con un veicolo da 300 kg e
+          tutte le suddivisioni ammissibili con due veicoli da 150 kg. Sposta i
+          cursori per vedere come cambia la convenienza quando variano le voci
+          di costo.
+        </p>
+      </div>
+
+      <div class="kpis" aria-live="polite">
+        <div class="kpi">
+          <div class="kpi-label">
+            <span class="dot" style="background: var(--accent)"></span>Scenario
+            1 · un veicolo
+          </div>
+          <div class="kpi-value" id="k-s1">–</div>
+          <div class="kpi-sub" id="k-s1-sub">–</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">
+            <span class="dot" style="background: var(--v1)"></span
+            ><span
+              class="dot"
+              style="background: var(--v2); margin-left: -6px"
+            ></span
+            >Scenario 2 · due veicoli
+          </div>
+          <div class="kpi-value" id="k-s2">–</div>
+          <div class="kpi-sub" id="k-s2-sub">–</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Differenza (S2 − S1)</div>
+          <div class="kpi-value" id="k-diff">–</div>
+          <div class="kpi-sub" id="k-diff-sub">–</div>
+        </div>
+        <div class="kpi verdict">
+          <div class="kpi-label">Con i parametri attuali</div>
+          <div class="kpi-value" id="k-verdict">–</div>
+          <div class="kpi-sub" id="k-verdict-sub">–</div>
+        </div>
+      </div>
+
+      <div class="grid-main">
+        <div class="card">
+          <div class="card-head">
+            <h2>Grafo e percorsi ottimi</h2>
+            <div class="spacer"></div>
+            <div class="seg" role="group" aria-label="Scenario da mostrare">
+              <button data-view="s1" aria-pressed="true">Scenario 1</button>
+              <button data-view="s2" aria-pressed="false">Scenario 2</button>
+              <button data-view="all" aria-pressed="false">
+                Tutti gli archi
+              </button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="graph-wrap">
+              <svg
+                class="graph"
+                id="graph"
+                viewBox="0 0 560 600"
+                role="img"
+                aria-label="Grafo del deposito e dei clienti con i percorsi ottimi"
+              ></svg>
+            </div>
+            <div class="legend" id="legend"></div>
+            <div class="routes" id="routes"></div>
+            <p class="note">
+              Disegno schematico: i nodi sono posizionati secondo le coordinate
+              reali, gli archi sono rettilinei e il loro peso è la distanza
+              stradale rilevata con Google Maps.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <h2>Parametri di costo</h2>
+            <div class="spacer"></div>
+            <button class="btn" id="reset">Valori iniziali</button>
+          </div>
+          <div class="card-body controls" id="controls"></div>
+        </div>
+      </div>
+
+      <section class="block two">
+        <div class="card">
+          <div class="card-head"><h2>Costo giornaliero per voce</h2></div>
+          <div class="card-body">
+            <div class="table-scroll"><table id="cost-table"></table></div>
+            <div class="bars" id="bars"></div>
+            <div class="bar-legend" id="bar-legend"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head">
+            <h2>Sensibilità</h2>
+            <div class="spacer"></div>
+            <label class="hint" for="sens-var">Fai variare</label>
+            <select id="sens-var"></select>
+          </div>
+          <div class="card-body">
+            <svg
+              class="chart"
+              id="chart"
+              viewBox="0 0 520 320"
+              role="img"
+              aria-label="Costo dei due scenari al variare del parametro scelto"
+            ></svg>
+            <p class="note" id="sens-note"></p>
+          </div>
+        </div>
+      </section>
+
+      <section class="block two">
+        <div class="card">
+          <div class="card-head">
+            <h2>Scenario 2 · suddivisioni ammissibili</h2>
+          </div>
+          <div class="card-body">
+            <p class="hint" id="s2-summary"></p>
+            <div class="table-scroll"><table id="s2-table"></table></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h2>Scenario 1 · sequenze migliori</h2></div>
+          <div class="card-body">
+            <p class="hint" id="s1-summary"></p>
+            <div class="table-scroll"><table id="s1-table"></table></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="block">
+        <div class="card">
+          <div class="card-head"><h2>Matrice delle distanze (km)</h2></div>
+          <div class="card-body">
+            <div class="table-scroll"><table id="matrix"></table></div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        <p>
+          Dati generati da <code>enumerazione_percorsi.py</code> e
+          <code>confronto_economico.py</code> tramite
+          <code>genera_pagina_html.py</code>. Clienti e quantità sono simulati;
+          località e distanze sono reali.
+        </p>
+        <p>
+          Fonti dei parametri: prezzo medio del gasolio self in Lombardia al
+          13/10/2026 (<a
+            href="https://www.mimit.gov.it/it/prezzo-medio-carburanti/regioni"
+            target="_blank"
+            rel="noopener"
+            >MIMIT</a
+          >), al netto dell'IVA; costo orario degli autisti di furgoni da 22,64
+          a 30,27 €/h secondo le tabelle ministeriali 2026 (<a
+            href="https://www.lavoro.gov.it/temi-e-priorita/rapporti-di-lavoro-e-relazioni-industriali/focus/settore-della-logistica-trasporto-merci-spedizione"
+            target="_blank"
+            rel="noopener"
+            >Ministero del Lavoro</a
+          >). Costi dei veicoli e tempi operativi sono ipotesi del modello.
+        </p>
+      </footer>
+    </main>
+
+    <!-- Qui genera_pagina_html.py scrive i risultati dei calcoli,
+         al posto della scritta {"nodi": [{"id": 0, "nome": "Monno", "lat": 46.2116, "lon": 10.3399, "domanda": 0}, {"id": 1, "nome": "Incudine", "lat": 46.2205, "lon": 10.3589, "domanda": 40}, {"id": 2, "nome": "Edolo", "lat": 46.1806, "lon": 10.3333, "domanda": 70}, {"id": 3, "nome": "Vezza d'Oglio", "lat": 46.2402, "lon": 10.3997, "domanda": 50}, {"id": 4, "nome": "Vione", "lat": 46.2484, "lon": 10.4472, "domanda": 30}, {"id": 5, "nome": "Malonno", "lat": 46.1226, "lon": 10.3192, "domanda": 60}], "distanze": [[0.0, 3.1, 6.6, 7.0, 11.4, 14.9], [3.1, 0.0, 5.5, 3.9, 8.3, 13.8], [6.6, 5.5, 0.0, 9.4, 13.8, 8.3], [7.0, 3.9, 9.4, 0.0, 4.7, 17.7], [11.4, 8.3, 13.8, 4.7, 0.0, 22.1], [14.9, 13.8, 8.3, 17.7, 22.1, 0.0]], "capacita": {"s1": 300, "s2": 150}, "scenario1": {"sequenza": [1, 3, 4, 2, 5], "km": 48.7, "esaminate": 120, "n_ottime": 16, "classifica": [{"km": 48.7, "sequenza": [1, 3, 4, 2, 5]}, {"km": 48.7, "sequenza": [1, 3, 4, 5, 2]}, {"km": 48.7, "sequenza": [1, 4, 3, 2, 5]}, {"km": 48.7, "sequenza": [1, 4, 3, 5, 2]}, {"km": 48.7, "sequenza": [2, 5, 1, 3, 4]}, {"km": 48.7, "sequenza": [2, 5, 1, 4, 3]}, {"km": 48.7, "sequenza": [2, 5, 3, 4, 1]}, {"km": 48.7, "sequenza": [2, 5, 4, 3, 1]}, {"km": 48.7, "sequenza": [3, 4, 1, 2, 5]}, {"km": 48.7, "sequenza": [3, 4, 1, 5, 2]}, {"km": 48.7, "sequenza": [4, 3, 1, 2, 5]}, {"km": 48.7, "sequenza": [4, 3, 1, 5, 2]}]}, "scenario2": {"suddivisioni": 15, "scartate": 9, "ammissibili": [{"km": 52.9, "veicoli": [{"sequenza": [1, 3, 4], "km": 23.1, "kg": 120}, {"sequenza": [2, 5], "km": 29.8, "kg": 130}]}, {"km": 63.9, "veicoli": [{"sequenza": [1, 2], "km": 15.2, "kg": 110}, {"sequenza": [3, 4, 5], "km": 48.7, "kg": 140}]}, {"km": 63.9, "veicoli": [{"sequenza": [1, 5], "km": 31.8, "kg": 100}, {"sequenza": [2, 3, 4], "km": 32.1, "kg": 150}]}, {"km": 71.4, "veicoli": [{"sequenza": [1, 4, 2], "km": 31.8, "kg": 140}, {"sequenza": [3, 5], "km": 39.6, "kg": 110}]}, {"km": 71.4, "veicoli": [{"sequenza": [1, 3, 5], "km": 39.6, "kg": 150}, {"sequenza": [2, 4], "km": 31.8, "kg": 100}]}, {"km": 71.4, "veicoli": [{"sequenza": [1, 4, 5], "km": 48.4, "kg": 130}, {"sequenza": [2, 3], "km": 23.0, "kg": 120}]}]}, "parametri": {"prezzo_gasolio": 1.84, "costo_orario": 25.0, "velocita": 50, "tempo_scarico": 10, "tempo_carico": 15, "veicoli": {"furgone_medio": {"consumo_l_100km": 9.0, "altri_costi_km": 0.08, "costo_fisso_giorno": 35.0}, "furgone_compatto": {"consumo_l_100km": 6.5, "altri_costi_km": 0.06, "costo_fisso_giorno": 25.0}}, "giorni_anno": 250}} -->
+    <script>
+      const DATI = /*__DATI__*/ null;
+    </script>
+    <script>
+/* =============================================================
+   Piccoli strumenti usati da tutti gli altri file:
+   trovare un elemento nella pagina e scrivere numeri, euro e
+   orari nel formato italiano (virgola per i decimali, punto per
+   le migliaia).
+   ============================================================= */
+
+/**
+ * Trova un elemento della pagina. Esempio: $("#reset") restituisce
+ * il pulsante che nel file HTML ha id="reset".
+ */
+const $ = (selettore) => document.querySelector(selettore);
+
+/** Nomi dei paesi, nello stesso ordine dei dati: il numero 0 è il deposito di Monno. */
+const NOMI_NODI = DATI.nodi.map((nodo) => nodo.nome);
+
+/** 1234.5 → "1.234,50 €" */
+function formattaEuro(valore) {
+  return valore.toLocaleString("it-IT", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+  });
+}
+
+/** 1234.5 → "1.235 €" (arrotondato all'euro, usato per i totali annui). */
+function formattaEuroIntero(valore) {
+  // la "regola" tra le barre / / inserisce un punto ogni tre cifre, partendo da destra
+  const conPuntiDelleMigliaia = Math.round(valore)
+    .toString()
+    .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return conPuntiDelleMigliaia + " €";
+}
+
+/** formattaNumero(3.14159, 2) → "3,14" */
+function formattaNumero(valore, decimali = 1) {
+  return valore.toLocaleString("it-IT", {
+    minimumFractionDigits: decimali,
+    maximumFractionDigits: decimali,
+  });
+}
+
+/**
+ * Scrive un valore con il segno + o − davanti, usando la funzione
+ * di formattazione indicata. Lo zero resta senza segno.
+ * Esempio: conSegno(-3, formattaEuro) → "−3,00 €"
+ */
+function conSegno(valore, formatta) {
+  let segno = "";
+  if (valore > 0) segno = "+";
+  if (valore < 0) segno = "−";
+  return segno + formatta(Math.abs(valore));
+}
+
+/** Scrive una durata in ore e minuti: 1.75 ore → "1h 45min", 0.5 ore → "30 min". */
+function formattaDurata(oreDecimali) {
+  let ore = Math.floor(oreDecimali);
+  let minuti = Math.round((oreDecimali - ore) * 60);
+  if (minuti === 60) {
+    // es. 1.999 ore: l'arrotondamento dà 60 minuti, che diventano un'ora in più
+    ore++;
+    minuti = 0;
+  }
+  if (ore === 0) return `${minuti} min`;
+  return `${ore}h ${String(minuti).padStart(2, "0")}min`;
+}
+
+/** Scrive un giro con i nomi dei paesi, partendo e tornando a Monno: "Monno → Edolo → Malonno → Monno". */
+function descriviPercorso(sequenzaClienti) {
+  const giroCompleto = [0, ...sequenzaClienti, 0];
+  return giroCompleto.map((indice) => NOMI_NODI[indice]).join(" → ");
+}
+</script>
+    <script>
+/* =============================================================
+   I costi usati nei calcoli (prezzo del gasolio, stipendio degli
+   autisti, ...) e l'elenco dei cursori con cui si possono cambiare
+   nella pagina.
+   ============================================================= */
+
+/** I costi di partenza, così come li ha scritti confronto_economico.py. */
+const PARAMETRI_DATI = DATI.parametri;
+const FURGONE_MEDIO = PARAMETRI_DATI.veicoli.furgone_medio;
+const FURGONE_COMPATTO = PARAMETRI_DATI.veicoli.furgone_compatto;
+
+/** Gli stessi valori di partenza, riorganizzati con un nome per ogni cursore. */
+const VALORI_INIZIALI = {
+  prezzo_gasolio: PARAMETRI_DATI.prezzo_gasolio,
+  costo_orario: PARAMETRI_DATI.costo_orario,
+  velocita: PARAMETRI_DATI.velocita,
+  tempo_scarico: PARAMETRI_DATI.tempo_scarico,
+  tempo_carico: PARAMETRI_DATI.tempo_carico,
+
+  fisso_medio: FURGONE_MEDIO.costo_fisso_giorno,
+  consumo_medio: FURGONE_MEDIO.consumo_l_100km,
+  usura_medio: FURGONE_MEDIO.altri_costi_km,
+
+  fisso_comp: FURGONE_COMPATTO.costo_fisso_giorno,
+  consumo_comp: FURGONE_COMPATTO.consumo_l_100km,
+  usura_comp: FURGONE_COMPATTO.altri_costi_km,
+};
+
+/** I valori scelti in questo momento con i cursori (all'inizio, quelli di partenza). */
+let parametriCorrenti = { ...VALORI_INIZIALI };
+
+/*
+  Elenco dei cursori, divisi in gruppi. Per ognuno si indica:
+    chiave           il nome del costo che il cursore modifica
+    etichetta        il testo scritto sopra il cursore
+    min, max, passo  valore minimo, massimo e di quanto si sposta ogni scatto
+    formatta         come scrivere il valore, con l'unità di misura (€/l, km/h, ...)
+    fonte            (non sempre presente) da dove viene il valore di partenza
+*/
+const GRUPPI_DI_CONTROLLI = [
+  {
+    titolo: "Carburante e lavoro",
+    controlli: [
+      {
+        chiave: "prezzo_gasolio",
+        etichetta: "Prezzo gasolio (IVA esclusa)",
+        min: 1.2,
+        max: 2.6,
+        passo: 0.01,
+        formatta: (v) => formattaNumero(v, 2) + " €/l",
+        fonte: "MIMIT, Lombardia, 13/10/2026: 2,247 €/l IVA inclusa",
+      },
+      {
+        chiave: "costo_orario",
+        etichetta: "Costo orario autista",
+        min: 18,
+        max: 40,
+        passo: 0.5,
+        formatta: (v) => formattaNumero(v, 2) + " €/h",
+        fonte: "Tabelle ministeriali 2026: 22,64–30,27 €/h",
+      },
+    ],
+  },
+  {
+    titolo: "Tempi operativi",
+    controlli: [
+      {
+        chiave: "velocita",
+        etichetta: "Velocità media",
+        min: 30,
+        max: 70,
+        passo: 1,
+        formatta: (v) => v + " km/h",
+        fonte: "Percorsi su strada statale SS42",
+      },
+      {
+        chiave: "tempo_scarico",
+        etichetta: "Scarico per cliente",
+        min: 0,
+        max: 30,
+        passo: 1,
+        formatta: (v) => v + " min",
+      },
+      {
+        chiave: "tempo_carico",
+        etichetta: "Carico al deposito per veicolo",
+        min: 0,
+        max: 45,
+        passo: 1,
+        formatta: (v) => v + " min",
+      },
+    ],
+  },
+  {
+    titolo: "Furgone medio · scenario 1",
+    controlli: [
+      {
+        chiave: "fisso_medio",
+        etichetta: "Costo fisso giornaliero",
+        min: 10,
+        max: 90,
+        passo: 1,
+        formatta: (v) => formattaNumero(v, 0) + " €/giorno",
+      },
+      {
+        chiave: "consumo_medio",
+        etichetta: "Consumo",
+        min: 5,
+        max: 14,
+        passo: 0.1,
+        formatta: (v) => formattaNumero(v, 1) + " l/100 km",
+      },
+      {
+        chiave: "usura_medio",
+        etichetta: "Usura e manutenzione",
+        min: 0,
+        max: 0.25,
+        passo: 0.01,
+        formatta: (v) => formattaNumero(v, 2) + " €/km",
+      },
+    ],
+  },
+  {
+    titolo: "Furgone compatto · scenario 2 (×2)",
+    controlli: [
+      {
+        chiave: "fisso_comp",
+        etichetta: "Costo fisso giornaliero",
+        min: 5,
+        max: 70,
+        passo: 1,
+        formatta: (v) => formattaNumero(v, 0) + " €/giorno",
+      },
+      {
+        chiave: "consumo_comp",
+        etichetta: "Consumo",
+        min: 3,
+        max: 12,
+        passo: 0.1,
+        formatta: (v) => formattaNumero(v, 1) + " l/100 km",
+      },
+      {
+        chiave: "usura_comp",
+        etichetta: "Usura e manutenzione",
+        min: 0,
+        max: 0.25,
+        passo: 0.01,
+        formatta: (v) => formattaNumero(v, 2) + " €/km",
+      },
+    ],
+  },
+];
+
+/** Tutti i cursori in un'unica lista, senza dividerli in gruppi. */
+const TUTTI_I_CONTROLLI = GRUPPI_DI_CONTROLLI.flatMap(
+  (gruppo) => gruppo.controlli,
+);
+
+/** Per trovare subito un cursore dal suo nome, es. CONTROLLO_PER_CHIAVE.velocita */
+const CONTROLLO_PER_CHIAVE = Object.fromEntries(
+  TUTTI_I_CONTROLLI.map((controllo) => [controllo.chiave, controllo]),
+);
+</script>
+    <script>
+/* =============================================================
+   Il calcolo dei costi: è lo stesso di confronto_economico.py,
+   ripetuto qui perché la pagina possa rifarlo ogni volta che
+   si sposta un cursore.
+
+   Scenario 1: un furgone medio visita da solo tutti i clienti.
+   Scenario 2: due furgoni compatti si dividono i clienti, nel
+               modo più corto trovato da enumerazione_percorsi.py.
+   ============================================================= */
+
+const SCENARIO_1 = DATI.scenario1;
+const MIGLIORE_SCENARIO_2 = DATI.scenario2.ammissibili[0];
+
+/** Consumo, usura e costo fisso del tipo di furgone indicato ("medio" o "compatto"). */
+function caratteristicheVeicolo(tipoVeicolo, parametri) {
+  if (tipoVeicolo === "medio") {
+    return {
+      consumo: parametri.consumo_medio, // litri ogni 100 km
+      usura: parametri.usura_medio, // € al km
+      costoFisso: parametri.fisso_medio, // € al giorno
+    };
+  }
+  return {
+    consumo: parametri.consumo_comp,
+    usura: parametri.usura_comp,
+    costoFisso: parametri.fisso_comp,
+  };
+}
+
+/**
+ * Quanto costa e quanto dura il giro di un singolo furgone.
+ * fisso, carburante, altri (usura) e autista sono le quattro voci
+ * di costo che compaiono nella tabella della pagina.
+ */
+function costoGiro(km, numeroClienti, tipoVeicolo, parametri) {
+  const veicolo = caratteristicheVeicolo(tipoVeicolo, parametri);
+
+  const oreDiGuida = km / parametri.velocita;
+  const minutiDiSosta =
+    numeroClienti * parametri.tempo_scarico + parametri.tempo_carico;
+  const ore = oreDiGuida + minutiDiSosta / 60;
+
+  const litriConsumati = (km * veicolo.consumo) / 100;
+  const carburante = litriConsumati * parametri.prezzo_gasolio;
+  const altri = km * veicolo.usura;
+  const autista = ore * parametri.costo_orario;
+
+  return {
+    km,
+    ore,
+    fisso: veicolo.costoFisso,
+    carburante,
+    altri,
+    autista,
+    totale: veicolo.costoFisso + carburante + altri + autista,
+  };
+}
+
+/** I valori che, nello scenario 2, si sommano tra i due furgoni. */
+const VOCI_DA_SOMMARE = [
+  "km",
+  "ore",
+  "fisso",
+  "carburante",
+  "altri",
+  "autista",
+  "totale",
+];
+
+/**
+ * Calcola i costi dei due scenari con i valori indicati.
+ * "durata" dice dopo quanto tempo tutte le consegne sono finite:
+ * nello scenario 2 i due furgoni partono insieme, quindi si finisce
+ * quando torna quello con il giro più lungo.
+ */
+function valutaScenari(parametri) {
+  const scenario1 = costoGiro(
+    SCENARIO_1.km,
+    SCENARIO_1.sequenza.length,
+    "medio",
+    parametri,
+  );
+  scenario1.durata = scenario1.ore;
+
+  const giriScenario2 = MIGLIORE_SCENARIO_2.veicoli.map((veicolo) =>
+    costoGiro(veicolo.km, veicolo.sequenza.length, "compatto", parametri),
+  );
+  const scenario2 = {};
+  for (const voce of VOCI_DA_SOMMARE) {
+    scenario2[voce] = giriScenario2.reduce((somma, g) => somma + g[voce], 0);
+  }
+  scenario2.durata = Math.max(...giriScenario2.map((g) => g.ore));
+
+  return { scenario1, scenario2 };
+}
+</script>
+    <script>
+/* =============================================================
+   Il riquadro "Parametri di costo": crea i cursori e fa in modo
+   che, quando se ne sposta uno, la pagina ricalcoli tutto.
+   ============================================================= */
+
+/** Il codice HTML di un cursore: titolo, valore attuale, barra e fonte. */
+
+function htmlControllo(controllo) {
+  const id = `c-${controllo.chiave}`;
+  const fonte = controllo.fonte
+    ? `<span class="src">${controllo.fonte}</span>`
+    : "";
+  return `
+    <div class="ctrl">
+      <label for="${id}">${controllo.etichetta}</label>
+      <output id="o-${controllo.chiave}" for="${id}"></output>
+      <input type="range" id="${id}"
+             min="${controllo.min}" max="${controllo.max}" step="${controllo.passo}"
+             value="${parametriCorrenti[controllo.chiave]}">
+      ${fonte}
+    </div>`;
+}
+
+/** Il codice HTML di un gruppo di cursori, con il suo titolo. */
+function htmlGruppoControlli(gruppo) {
+  return `
+    <div>
+      <p class="group-title">${gruppo.titolo}</p>
+      ${gruppo.controlli.map(htmlControllo).join("")}
+    </div>`;
+}
+
+/** Pulsante "Valori iniziali": riporta tutti i cursori ai valori di partenza. */
+function ripristinaValoriIniziali() {
+  parametriCorrenti = { ...VALORI_INIZIALI };
+  for (const controllo of TUTTI_I_CONTROLLI) {
+    $(`#c-${controllo.chiave}`).value = parametriCorrenti[controllo.chiave];
+  }
+  aggiorna();
+}
+
+/** Mette i cursori nella pagina e li collega ai calcoli. */
+function creaControlli() {
+  $("#controls").innerHTML = GRUPPI_DI_CONTROLLI.map(htmlGruppoControlli).join(
+    "",
+  );
+
+  // quando si sposta un cursore: salva il nuovo valore e ricalcola la pagina
+  for (const controllo of TUTTI_I_CONTROLLI) {
+    $(`#c-${controllo.chiave}`).addEventListener("input", (evento) => {
+      parametriCorrenti[controllo.chiave] = parseFloat(evento.target.value);
+      aggiorna();
+    });
+  }
+
+  $("#reset").addEventListener("click", ripristinaValoriIniziali);
+}
+</script>
+    <script>
+/* =============================================================
+   Il disegno con il deposito, i clienti e i giri dei furgoni.
+
+   Con i pulsanti sopra il disegno si sceglie cosa mostrare:
+     "s1"   il giro dell'unico furgone (scenario 1)
+     "s2"   i giri dei due furgoni (scenario 2)
+     "all"  tutti i collegamenti tra i paesi, con i km
+   ============================================================= */
+
+let vistaGrafo = "s1";
+
+/* Misure del disegno, in pixel. Devono coincidere con quelle
+   scritte nel file HTML (viewBox="0 0 560 600"). */
+const LARGHEZZA_GRAFO = 560;
+const ALTEZZA_GRAFO = 600;
+const MARGINE_GRAFO = 64;
+
+/** Le linee si fermano a questa distanza dal centro di un paese, per non coprirne il cerchio. */
+const RAGGIO_INGOMBRO_NODO = 16;
+
+/**
+ * Trasforma la posizione reale di ogni paese (latitudine e longitudine)
+ * in un punto del disegno. Le distanze nord-sud sono in scala reale;
+ * quelle est-ovest possono essere allargate fino a 1,8 volte, perché
+ * i paesi sono quasi in fila lungo la valle e il disegno verrebbe
+ * troppo stretto per leggerlo.
+ */
+function calcolaPosizioniNodi() {
+  // sulle Alpi un grado di longitudine è più corto di uno di latitudine: si corregge
+  const LATITUDINE_RIFERIMENTO = 46.18;
+  const correzioneLongitudine = Math.cos(
+    (LATITUDINE_RIFERIMENTO * Math.PI) / 180,
+  );
+
+  const xs = DATI.nodi.map((nodo) => nodo.lon * correzioneLongitudine);
+  const ys = DATI.nodi.map((nodo) => nodo.lat);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  const scalaY = (ALTEZZA_GRAFO - 2 * MARGINE_GRAFO) / (maxY - minY);
+  const scalaX = Math.min(
+    (LARGHEZZA_GRAFO - 2 * MARGINE_GRAFO) / (maxX - minX),
+    scalaY * 1.8,
+  );
+
+  // centra il disegno nell'area disponibile
+  const spostamentoX = (LARGHEZZA_GRAFO - (maxX - minX) * scalaX) / 2;
+  const spostamentoY = (ALTEZZA_GRAFO - (maxY - minY) * scalaY) / 2;
+
+  return DATI.nodi.map((_, i) => ({
+    x: spostamentoX + (xs[i] - minX) * scalaX,
+    // nel disegno i valori crescono verso il basso: si capovolge, così il nord resta in alto
+    y: spostamentoY + (maxY - ys[i]) * scalaY,
+  }));
+}
+const POSIZIONI_NODI = calcolaPosizioniNodi();
+
+/*
+  Dove scrivere nomi e numeri accanto a ogni paese, sistemato a mano
+  perché le scritte non si sovrappongano. Il numero a sinistra è
+  quello del paese (0 = Monno).
+*/
+// nome del paese: [spostamento a destra, spostamento in basso, allineamento del testo]
+const POSIZIONE_ETICHETTA = {
+  0: [-16, 4, "end"],
+  1: [6, 26, "start"],
+  2: [-16, 4, "end"],
+  3: [-14, -16, "end"],
+  4: [-14, -24, "end"],
+  5: [16, 4, "start"],
+};
+// cerchietto con il numero della tappa: [spostamento a destra, spostamento in basso]
+const POSIZIONE_NUMERO_TAPPA = {
+  1: [12, -12],
+  2: [13, -11],
+  3: [13, -13],
+  4: [13, 13],
+  5: [-13, -13],
+};
+
+/** Kg totali da consegnare a tutti i clienti. */
+const DOMANDA_TOTALE = DATI.nodi.reduce((somma, nodo) => somma + nodo.domanda, 0);
+
+/**
+ * I giri da disegnare, uno per furgone, con colore e dati da mostrare.
+ * Nella vista "all" non si disegna nessun giro.
+ */
+function percorsiDellaVista(vista) {
+  if (vista === "s1") {
+    return [
+      {
+        titolo: "Veicolo unico",
+        sequenza: SCENARIO_1.sequenza,
+        km: SCENARIO_1.km,
+        kg: DOMANDA_TOTALE,
+        capacita: DATI.capacita.s1,
+        colore: "var(--accent)",
+        freccia: "arr-s1",
+      },
+    ];
+  }
+  if (vista === "s2") {
+    return MIGLIORE_SCENARIO_2.veicoli.map((veicolo, i) => ({
+      titolo: `Veicolo ${i + 1}`,
+      sequenza: veicolo.sequenza,
+      km: veicolo.km,
+      kg: veicolo.kg,
+      capacita: DATI.capacita.s2,
+      colore: i === 0 ? "var(--v1)" : "var(--v2)",
+      freccia: i === 0 ? "arr-v1" : "arr-v2",
+    }));
+  }
+  return [];
+}
+
+/* ---------- i pezzi del disegno ----------
+   Ogni funzione restituisce il codice di una parte del disegno
+   (linee, cerchi, scritte), che poi viene messo insieme in disegnaGrafo(). */
+
+/** Le punte di freccia alla fine dei giri, una per ogni colore. */
+function htmlPunteDiFreccia() {
+  const frecce = [
+    ["arr-s1", "var(--accent)"],
+    ["arr-v1", "var(--v1)"],
+    ["arr-v2", "var(--v2)"],
+  ];
+  const marker = frecce.map(
+    ([id, colore]) =>
+      `<marker id="${id}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">` +
+      `<path d="M0,0 L10,5 L0,10 z" fill="${colore}"/></marker>`,
+  );
+  return `<defs>${marker.join("")}</defs>`;
+}
+
+/** Le linee grigie che collegano ogni paese a tutti gli altri; nella vista "all" anche con i km. */
+function htmlArchi() {
+  const mostraDistanze = vistaGrafo === "all";
+  const numeroNodi = DATI.nodi.length;
+  let html = "";
+  for (let i = 0; i < numeroNodi; i++) {
+    for (let j = i + 1; j < numeroNodi; j++) {
+      const a = POSIZIONI_NODI[i];
+      const b = POSIZIONI_NODI[j];
+      html += `<line class="edge" x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" opacity="${mostraDistanze ? 1 : 0.45}"/>`;
+      if (mostraDistanze) {
+        const centroX = (a.x + b.x) / 2;
+        const centroY = (a.y + b.y) / 2;
+        html += `<text class="edge-label" x="${centroX}" y="${centroY}" text-anchor="middle" dy="4">${formattaNumero(DATI.distanze[i][j])}</text>`;
+      }
+    }
+  }
+  return html;
+}
+
+/**
+ * Le linee di un giro: Monno → clienti → Monno.
+ * Ogni tratto è accorciato alle due estremità, così non entra nei cerchi dei paesi.
+ * "M" vuol dire "spostati qui" e "L" "traccia una linea fin qui".
+ */
+function tracciatoGiro(sequenzaClienti) {
+  const punti = [0, ...sequenzaClienti, 0].map((i) => POSIZIONI_NODI[i]);
+  let tracciato = "";
+  for (let i = 0; i < punti.length - 1; i++) {
+    const da = punti[i];
+    const a = punti[i + 1];
+    const dx = a.x - da.x;
+    const dy = a.y - da.y;
+    const lunghezza = Math.hypot(dx, dy);
+    // di quanto accorciare il tratto, in orizzontale e in verticale
+    const rientroX = (dx / lunghezza) * RAGGIO_INGOMBRO_NODO;
+    const rientroY = (dy / lunghezza) * RAGGIO_INGOMBRO_NODO;
+
+    const inizioX = da.x + rientroX;
+    const inizioY = da.y + rientroY;
+    const fineX = a.x - rientroX;
+    const fineY = a.y - rientroY;
+    tracciato += `M${inizioX.toFixed(1)},${inizioY.toFixed(1)} L${fineX.toFixed(1)},${fineY.toFixed(1)} `;
+  }
+  return tracciato;
+}
+
+/** I giri dei furgoni, ognuno nel suo colore e con la freccia finale. */
+function htmlPercorsi(percorsi) {
+  return percorsi
+    .map(
+      (p) =>
+        `<path class="route" d="${tracciatoGiro(p.sequenza)}" stroke="${p.colore}" marker-end="url(#${p.freccia})"/>`,
+    )
+    .join("");
+}
+
+/** Un cerchio per ogni paese, con nome e kg da consegnare (il deposito ha un quadratino al centro). */
+function htmlNodi() {
+  let html = "";
+  DATI.nodi.forEach((nodo, i) => {
+    const p = POSIZIONI_NODI[i];
+    const eDeposito = i === 0;
+
+    html += `<circle class="node-circle ${eDeposito ? "node-depot" : ""}" cx="${p.x}" cy="${p.y}" r="${eDeposito ? 11 : 9}"/>`;
+    if (eDeposito) {
+      html += `<rect x="${p.x - 4}" y="${p.y - 4}" width="8" height="8" fill="var(--surface)" rx="1"/>`;
+    }
+
+    const [dx, dy, allineamento] = POSIZIONE_ETICHETTA[i];
+    const x = p.x + dx;
+    const y = p.y + dy;
+    const sottotitolo = eDeposito ? "deposito" : nodo.domanda + " kg";
+    html += `<text class="node-name" x="${x}" y="${y}" text-anchor="${allineamento}">${nodo.nome}</text>`;
+    html += `<text class="node-kg" x="${x}" y="${y + 14}" text-anchor="${allineamento}">${sottotitolo}</text>`;
+  });
+  return html;
+}
+
+/** Accanto a ogni cliente, il numero che dice in che ordine viene servito, nel colore del suo furgone. */
+function htmlNumeriTappa(percorsi) {
+  let html = "";
+  for (const percorso of percorsi) {
+    percorso.sequenza.forEach((cliente, posizione) => {
+      const p = POSIZIONI_NODI[cliente];
+      const [dx, dy] = POSIZIONE_NUMERO_TAPPA[cliente];
+      const x = p.x + dx;
+      const y = p.y + dy;
+      html += `<circle cx="${x}" cy="${y}" r="8" fill="${percorso.colore}"/>`;
+      html += `<text class="step" x="${x}" y="${y + 3.5}" text-anchor="middle">${posizione + 1}</text>`;
+    });
+  }
+  return html;
+}
+
+/* ---------- legenda e riquadri sotto il disegno ---------- */
+
+/** Il riquadro con km, carico e paesi visitati da un furgone. */
+function htmlSchedaPercorso(percorso) {
+  return `
+    <div class="route-card" style="border-left-color:${percorso.colore}">
+      <div class="r-title">
+        <span>${percorso.titolo}</span>
+        <span>${formattaNumero(percorso.km)} km · ${percorso.kg}/${percorso.capacita} kg</span>
+      </div>
+      <div class="r-path">${descriviPercorso(percorso.sequenza)}</div>
+    </div>`;
+}
+
+/** La legenda sotto il disegno, che spiega i colori. */
+function htmlLegenda() {
+  const voce = (colore, testo) =>
+    `<span><i style="background:${colore}"></i>${testo}</span>`;
+
+  if (vistaGrafo === "s1") {
+    return (
+      voce("var(--accent)", `Veicolo unico, ${DATI.capacita.s1} kg`) +
+      `<span>I numeri indicano l'ordine delle consegne</span>`
+    );
+  }
+  if (vistaGrafo === "s2") {
+    return (
+      voce("var(--v1)", "Veicolo 1 · zona nord") +
+      voce("var(--v2)", "Veicolo 2 · zona sud")
+    );
+  }
+  const numeroArchi = (DATI.nodi.length * (DATI.nodi.length - 1)) / 2;
+  return voce(
+    "var(--edge)",
+    `${numeroArchi} archi del grafo completo, con la distanza stradale in km`,
+  );
+}
+
+/* ---------- il disegno completo ---------- */
+
+/** Ridisegna tutto: disegno, legenda e riquadri dei furgoni. */
+function disegnaGrafo() {
+  const percorsi = percorsiDellaVista(vistaGrafo);
+
+  // l'ordine conta: ogni pezzo viene disegnato sopra i precedenti
+  $("#graph").innerHTML =
+    htmlPunteDiFreccia() +
+    htmlArchi() +
+    htmlPercorsi(percorsi) +
+    htmlNodi() +
+    htmlNumeriTappa(percorsi);
+
+  $("#legend").innerHTML = htmlLegenda();
+  $("#routes").innerHTML = percorsi.map(htmlSchedaPercorso).join("");
+}
+
+/** Fa funzionare i pulsanti "Scenario 1", "Scenario 2" e "Tutti gli archi" sopra il disegno. */
+function collegaPulsantiVista() {
+  const pulsanti = document.querySelectorAll(".seg button");
+  pulsanti.forEach((pulsante) =>
+    pulsante.addEventListener("click", () => {
+      vistaGrafo = pulsante.dataset.view;
+      pulsanti.forEach((altro) =>
+        altro.setAttribute("aria-pressed", String(altro === pulsante)),
+      );
+      disegnaGrafo();
+    }),
+  );
+}
+</script>
+    <script>
+/* =============================================================
+   I quattro riquadri con i numeri principali in cima alla pagina,
+   la tabella dei costi di un giorno e le barre colorate che
+   mostrano di cosa è fatto il costo.
+   ============================================================= */
+
+/** Le quattro voci di costo, con il colore usato per ognuna nelle barre. */
+const VOCI_DI_COSTO = [
+  { chiave: "fisso", etichetta: "Costi fissi veicoli", colore: "#7D8B6A" },
+  { chiave: "carburante", etichetta: "Carburante", colore: "#C9A227" },
+  { chiave: "altri", etichetta: "Usura e manutenzione", colore: "#9C7B5B" },
+  { chiave: "autista", etichetta: "Autisti", colore: "#4F7A94" },
+];
+
+/** Differenze più piccole di questa (meno di mezzo centesimo) contano come zero. */
+const TOLLERANZA_DIFFERENZA = 0.004;
+
+/**
+ * Il colore della colonna "Differenza":
+ * "pos" se lo scenario 2 costa di più, "neg" se costa di meno, nessuno se sono pari.
+ */
+function classeDifferenza(differenza) {
+  if (differenza > TOLLERANZA_DIFFERENZA) return "pos";
+  if (differenza < -TOLLERANZA_DIFFERENZA) return "neg";
+  return "";
+}
+
+/* ---------- tabella ---------- */
+
+/** Una riga della tabella: nome della voce, valore nei due scenari e differenza. */
+function htmlRigaTabella(etichetta, valore1, valore2, formatta) {
+  const differenza = valore2 - valore1;
+  return `
+    <tr>
+      <td>${etichetta}</td>
+      <td class="num">${formatta(valore1)}</td>
+      <td class="num">${formatta(valore2)}</td>
+      <td class="num ${classeDifferenza(differenza)}">${conSegno(differenza, formatta)}</td>
+    </tr>`;
+}
+
+/** La tabella "Costo giornaliero per voce". */
+function disegnaTabellaCosti({ scenario1, scenario2 }) {
+  const formattaKm = (v) => formattaNumero(v) + " km";
+
+  const righeVoci = [
+    htmlRigaTabella("Km percorsi", scenario1.km, scenario2.km, formattaKm),
+    htmlRigaTabella(
+      "Ore di lavoro autisti",
+      scenario1.ore,
+      scenario2.ore,
+      formattaDurata,
+    ),
+    ...VOCI_DI_COSTO.map((voce) =>
+      htmlRigaTabella(
+        voce.etichetta,
+        scenario1[voce.chiave],
+        scenario2[voce.chiave],
+        formattaEuro,
+      ),
+    ),
+  ];
+
+  // nella riga del totale si colora anche una differenza piccolissima
+  const differenzaTotale = scenario2.totale - scenario1.totale;
+  const rigaTotale = `
+    <tr class="total">
+      <td>Totale giornaliero</td>
+      <td class="num">${formattaEuro(scenario1.totale)}</td>
+      <td class="num">${formattaEuro(scenario2.totale)}</td>
+      <td class="num ${differenzaTotale > 0 ? "pos" : "neg"}">${conSegno(differenzaTotale, formattaEuro)}</td>
+    </tr>`;
+
+  // la durata non è colorata: finire prima non è un costo
+  const rigaDurata = `
+    <tr>
+      <td>Consegne completate dopo</td>
+      <td class="num">${formattaDurata(scenario1.durata)}</td>
+      <td class="num">${formattaDurata(scenario2.durata)}</td>
+      <td class="num">${conSegno(scenario2.durata - scenario1.durata, formattaDurata)}</td>
+    </tr>`;
+
+  $("#cost-table").innerHTML = `
+    <thead>
+      <tr>
+        <th>Voce</th>
+        <th class="num">Scenario 1</th>
+        <th class="num">Scenario 2</th>
+        <th class="num">Differenza</th>
+      </tr>
+    </thead>
+    <tbody>${righeVoci.join("")}${rigaTotale}${rigaDurata}</tbody>`;
+}
+
+/* ---------- barre ---------- */
+
+/**
+ * Una barra orizzontale divisa in pezzi colorati, uno per voce di costo.
+ * "massimo" è l'importo che corrisponde alla barra piena.
+ */
+function htmlBarra(scenario, titolo, massimo) {
+  const segmenti = VOCI_DI_COSTO.map((voce) => {
+    const larghezza = (scenario[voce.chiave] / massimo) * 100;
+    const descrizione = `${voce.etichetta}: ${formattaEuro(scenario[voce.chiave])}`;
+    return `<div style="width:${larghezza}%;background:${voce.colore}" title="${descrizione}"></div>`;
+  });
+  return `
+    <div class="bar-row">
+      <div class="bar-label"><span>${titolo}</span><strong>${formattaEuro(scenario.totale)}</strong></div>
+      <div class="bar">${segmenti.join("")}</div>
+    </div>`;
+}
+
+/** Le due barre (una per scenario) e la legenda dei colori. */
+function disegnaBarre({ scenario1, scenario2 }) {
+  // la barra più lunga arriva a circa il 96%, così resta un po' di spazio
+  const massimo = Math.max(scenario1.totale, scenario2.totale) * 1.04;
+
+  $("#bars").innerHTML =
+    htmlBarra(scenario1, "Scenario 1 · un veicolo", massimo) +
+    htmlBarra(scenario2, "Scenario 2 · due veicoli", massimo);
+
+  $("#bar-legend").innerHTML = VOCI_DI_COSTO.map(
+    (voce) => `<span><i style="background:${voce.colore}"></i>${voce.etichetta}</span>`,
+  ).join("");
+}
+
+/* ---------- i quattro riquadri in cima ---------- */
+
+/** Costo dei due scenari, differenza, e quale scenario conviene. */
+function disegnaIndicatori({ scenario1, scenario2 }) {
+  const differenza = scenario2.totale - scenario1.totale;
+  const giorniAnno = PARAMETRI_DATI.giorni_anno;
+
+  $("#k-s1").textContent = formattaEuro(scenario1.totale);
+  $("#k-s1-sub").textContent =
+    `${formattaNumero(scenario1.km)} km · consegne in ${formattaDurata(scenario1.durata)}`;
+
+  $("#k-s2").textContent = formattaEuro(scenario2.totale);
+  $("#k-s2-sub").textContent =
+    `${formattaNumero(scenario2.km)} km · consegne in ${formattaDurata(scenario2.durata)}`;
+
+  $("#k-diff").textContent = conSegno(differenza, formattaEuro);
+  $("#k-diff-sub").textContent =
+    `${conSegno(differenza * giorniAnno, formattaEuroIntero)} all'anno (${giorniAnno} giorni)`;
+
+  // ultimo riquadro: quale scenario conviene (pari se la differenza è sotto il mezzo centesimo)
+  if (Math.abs(differenza) < 0.005) {
+    $("#k-verdict").textContent = "I due scenari si equivalgono";
+    $("#k-verdict-sub").textContent = "Punto di pareggio raggiunto";
+    return;
+  }
+
+  const convieneUnVeicolo = differenza > 0;
+  $("#k-verdict").textContent = convieneUnVeicolo
+    ? "Conviene un solo veicolo"
+    : "Conviene usare due veicoli";
+
+  const percentualeRisparmio =
+    (Math.abs(differenza) / Math.max(scenario1.totale, scenario2.totale)) * 100;
+  const anticipoDueVeicoli = Math.max(0, scenario1.durata - scenario2.durata);
+  $("#k-verdict-sub").textContent =
+    `Risparmio del ${formattaNumero(percentualeRisparmio)}% · ` +
+    `i due furgoni finiscono ${formattaDurata(anticipoDueVeicoli)} prima`;
+}
+</script>
+    <script>
+/* =============================================================
+   Il grafico "Sensibilità": si sceglie un costo dal menu, lo si fa
+   andare dal minimo al massimo del suo cursore (lasciando fermi
+   tutti gli altri) e si guarda come cambia il costo dei due
+   scenari. Dove le due linee si incrociano i due scenari costano
+   uguale: è il "punto di pareggio".
+   ============================================================= */
+
+/** I costi che si possono scegliere nel menu "Fai variare". */
+const PARAMETRI_SENSIBILITA = [
+  "costo_orario",
+  "prezzo_gasolio",
+  "fisso_medio",
+  "fisso_comp",
+  "velocita",
+  "tempo_carico",
+];
+
+/** Testo aggiunto nel menu, perché altrimenti queste due voci avrebbero lo stesso nome. */
+const PRECISAZIONE_MENU = {
+  fisso_medio: " (furgone medio)",
+  fisso_comp: " (furgone compatto)",
+};
+
+/* Misure del grafico, in pixel. Devono coincidere con quelle
+   scritte nel file HTML (viewBox="0 0 520 320"). I margini lasciano
+   spazio alle scritte sugli assi. */
+const LARGHEZZA_GRAFICO = 520;
+const ALTEZZA_GRAFICO = 320;
+const MARGINI_GRAFICO = { sinistra: 62, destra: 16, sopra: 16, sotto: 46 };
+
+/** Riempie il menu "Fai variare" e ridisegna il grafico quando si cambia scelta. */
+function creaSelettoreSensibilita() {
+  const menu = $("#sens-var");
+  menu.innerHTML = PARAMETRI_SENSIBILITA.map((chiave) => {
+    const testo =
+      CONTROLLO_PER_CHIAVE[chiave].etichetta + (PRECISAZIONE_MENU[chiave] || "");
+    return `<option value="${chiave}">${testo}</option>`;
+  }).join("");
+  menu.addEventListener("change", aggiorna);
+}
+
+/** Calcola i due scenari cambiando un solo costo e lasciando gli altri come sono. */
+function valutaConParametro(chiave, valore) {
+  return valutaScenari({ ...parametriCorrenti, [chiave]: valore });
+}
+
+/** Divide l'intervallo da min a max in parti uguali. Esempio: (0, 10, 4) → [0; 2,5; 5; 7,5; 10]. */
+function valoriEquidistanti(min, max, parti) {
+  return Array.from(
+    { length: parti + 1 },
+    (_, i) => min + ((max - min) * i) / parti,
+  );
+}
+
+/**
+ * Cerca il valore del costo scelto per cui i due scenari costano uguale.
+ * 1) Prova 400 valori dal minimo al massimo, finché lo scenario più
+ *    conveniente cambia: il pareggio è tra l'ultimo valore e il precedente.
+ * 2) Restringe la ricerca: guarda il punto a metà tra i due, tiene la metà
+ *    in cui avviene il cambio, e ripete 40 volte fino a un valore preciso.
+ * Restituisce null se le due linee non si incrociano mai.
+ */
+function trovaPareggio(chiave) {
+  const { min, max } = CONTROLLO_PER_CHIAVE[chiave];
+  const NUMERO_PASSI = 400;
+  const ITERAZIONI_BISEZIONE = 40;
+
+  const differenza = (valore) => {
+    const r = valutaConParametro(chiave, valore);
+    return r.scenario2.totale - r.scenario1.totale;
+  };
+
+  let differenzaPrecedente = differenza(min);
+  for (let i = 1; i <= NUMERO_PASSI; i++) {
+    const valore = min + ((max - min) * i) / NUMERO_PASSI;
+    const differenzaAttuale = differenza(valore);
+
+    if (Math.sign(differenzaAttuale) !== Math.sign(differenzaPrecedente)) {
+      // lo scenario più conveniente è cambiato: il pareggio è tra il valore precedente e questo
+      let basso = valore - (max - min) / NUMERO_PASSI;
+      let alto = valore;
+      for (let j = 0; j < ITERAZIONI_BISEZIONE; j++) {
+        const medio = (basso + alto) / 2;
+        if (Math.sign(differenza(medio)) === Math.sign(differenza(basso))) {
+          basso = medio;
+        } else {
+          alto = medio;
+        }
+      }
+      return (basso + alto) / 2;
+    }
+    differenzaPrecedente = differenzaAttuale;
+  }
+  return null;
+}
+
+/* ---------- disegno ---------- */
+
+/** Disegna il grafico per il costo scelto nel menu, e la frase di commento sotto. */
+function disegnaGraficoSensibilita() {
+  const chiave = $("#sens-var").value;
+  const controllo = CONTROLLO_PER_CHIAVE[chiave];
+  const W = LARGHEZZA_GRAFICO;
+  const H = ALTEZZA_GRAFICO;
+  const M = MARGINI_GRAFICO;
+
+  // 1) calcola i costi per 61 valori, dal minimo al massimo del cursore
+  const valoriX = valoriEquidistanti(controllo.min, controllo.max, 60);
+  const risultati = valoriX.map((v) => valutaConParametro(chiave, v));
+  const costi1 = risultati.map((r) => r.scenario1.totale);
+  const costi2 = risultati.map((r) => r.scenario2.totale);
+
+  // 2) da quanti euro a quanti euro va l'asse verticale, con un po' di spazio sopra e sotto
+  let yMin = Math.min(...costi1, ...costi2);
+  let yMax = Math.max(...costi1, ...costi2);
+  const margineY = (yMax - yMin) * 0.08 || 5;
+  yMin = Math.max(0, yMin - margineY);
+  yMax += margineY;
+
+  // 3) funzioni che dicono in che punto del disegno va un valore
+  //    (xGrafico: posizione da sinistra; yGrafico: posizione dall'alto)
+  const xGrafico = (valore) =>
+    M.sinistra +
+    ((valore - controllo.min) / (controllo.max - controllo.min)) *
+      (W - M.sinistra - M.destra);
+  const yGrafico = (costo) =>
+    H - M.sotto - ((costo - yMin) / (yMax - yMin)) * (H - M.sopra - M.sotto);
+  const tracciatoCurva = (costi) =>
+    costi
+      .map((costo, i) => {
+        const comando = i === 0 ? "M" : "L";
+        return `${comando}${xGrafico(valoriX[i]).toFixed(1)},${yGrafico(costo).toFixed(1)}`;
+      })
+      .join("");
+
+  let svg = "";
+
+  // righe orizzontali di sfondo, con gli importi in euro a sinistra
+  for (const costo of valoriEquidistanti(yMin, yMax, 4)) {
+    const y = yGrafico(costo);
+    svg += `<line class="grid" x1="${M.sinistra}" x2="${W - M.destra}" y1="${y}" y2="${y}"/>`;
+    svg += `<text x="${M.sinistra - 8}" y="${y + 4}" text-anchor="end">${formattaNumero(costo, 0)} €</text>`;
+  }
+
+  // valori scritti sotto il grafico (il primo allineato a sinistra, l'ultimo a destra)
+  valoriEquidistanti(controllo.min, controllo.max, 4).forEach((valore, i) => {
+    let allineamento = "middle";
+    if (i === 0) allineamento = "start";
+    if (i === 4) allineamento = "end";
+    svg += `<text x="${xGrafico(valore)}" y="${H - M.sotto + 18}" text-anchor="${allineamento}">${controllo.formatta(valore)}</text>`;
+  });
+  svg += `<text x="${(M.sinistra + W - M.destra) / 2}" y="${H - 8}" text-anchor="middle">${controllo.etichetta}</text>`;
+
+  // punto di pareggio: linea verticale tratteggiata, pallino e scritta
+  const pareggio = trovaPareggio(chiave);
+  if (pareggio !== null) {
+    const x = xGrafico(pareggio);
+    const y = yGrafico(valutaConParametro(chiave, pareggio).scenario1.totale);
+    // se la linea è vicina al bordo destro, la scritta va a sinistra per non uscire
+    const etichettaASinistra = x > W - 170;
+    svg += `<line x1="${x}" x2="${x}" y1="${M.sopra}" y2="${H - M.sotto}" stroke="var(--muted)" stroke-dasharray="4 4"/>`;
+    svg += `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--text)"/>`;
+    svg += `<text x="${etichettaASinistra ? x - 6 : x + 6}" y="${M.sopra + 12}" text-anchor="${etichettaASinistra ? "end" : "start"}" fill="var(--text)" style="font-weight:600">pareggio ${controllo.formatta(pareggio)}</text>`;
+  }
+
+  // le due linee dei costi: continua = scenario 1, tratteggiata = scenario 2
+  svg += `<path d="${tracciatoCurva(costi1)}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>`;
+  svg += `<path d="${tracciatoCurva(costi2)}" fill="none" stroke="var(--v2)" stroke-width="2.5" stroke-dasharray="7 4"/>`;
+
+  // linea verticale sottile e due pallini: dove si trova ora il cursore
+  const valoreAttuale = parametriCorrenti[chiave];
+  const attuale = valutaScenari(parametriCorrenti);
+  const xAttuale = xGrafico(valoreAttuale);
+  svg += `<line x1="${xAttuale}" x2="${xAttuale}" y1="${M.sopra}" y2="${H - M.sotto}" stroke="var(--border)"/>`;
+  svg += `<circle cx="${xAttuale}" cy="${yGrafico(attuale.scenario1.totale)}" r="4" fill="var(--accent)"/>`;
+  svg += `<circle cx="${xAttuale}" cy="${yGrafico(attuale.scenario2.totale)}" r="4" fill="var(--v2)"/>`;
+
+  // riquadro in alto a sinistra che spiega le due linee
+  svg += `
+    <g transform="translate(${M.sinistra + 10},${M.sopra + 6})">
+      <rect width="150" height="40" rx="6" fill="var(--surface)" stroke="var(--border)"/>
+      <line x1="10" x2="30" y1="14" y2="14" stroke="var(--accent)" stroke-width="2.5"/>
+      <text x="36" y="18" fill="var(--text)">Scenario 1</text>
+      <line x1="10" x2="30" y1="29" y2="29" stroke="var(--v2)" stroke-width="2.5" stroke-dasharray="7 4"/>
+      <text x="36" y="33" fill="var(--text)">Scenario 2</text>
+    </g>`;
+
+  $("#chart").innerHTML = svg;
+  $("#sens-note").textContent = notaSensibilita(
+    chiave,
+    pareggio,
+    attuale,
+    valoreAttuale,
+  );
+}
+
+/** La frase sotto il grafico, che spiega in parole cosa mostra. */
+function notaSensibilita(chiave, pareggio, attuale, valoreAttuale) {
+  const controllo = CONTROLLO_PER_CHIAVE[chiave];
+
+  if (pareggio === null) {
+    const scenarioMigliore =
+      attuale.scenario2.totale - attuale.scenario1.totale > 0
+        ? "1 (un veicolo)"
+        : "2 (due veicoli)";
+    return `In tutto l'intervallo lo scenario ${scenarioMigliore} resta il più economico: questa voce da sola non cambia la scelta.`;
+  }
+
+  // guarda un po' dopo il pareggio, per capire quale scenario conviene da lì in poi
+  const valoreOltre = Math.min(
+    controllo.max,
+    pareggio + (controllo.max - controllo.min) / 50,
+  );
+  const oltre = valutaConParametro(chiave, valoreOltre);
+  const chiConviene =
+    oltre.scenario2.totale < oltre.scenario1.totale
+      ? "convengono i due veicoli"
+      : "conviene il veicolo unico";
+  return `Le curve si incrociano a ${controllo.formatta(pareggio)}: oltre questo valore ${chiConviene}. Valore attuale: ${controllo.formatta(valoreAttuale)}.`;
+}
+</script>
+    <script>
+/* =============================================================
+   Le tabelle in fondo alla pagina. Non cambiano quando si spostano
+   i cursori, perché mostrano i km e non i costi: vengono scritte
+   una volta sola, quando si apre la pagina.
+   ============================================================= */
+
+/** I nomi dei clienti di un giro, separati dal segno indicato (es. ", " oppure " → "). */
+const nomiClienti = (sequenza, separatore) =>
+  sequenza.map((indice) => NOMI_NODI[indice]).join(separatore);
+
+/** Scenario 2: tutti i modi validi di dividere i clienti tra i due furgoni. */
+function disegnaTabellaScenario2() {
+  const scenario2 = DATI.scenario2;
+
+  $("#s2-summary").textContent =
+    `${scenario2.suddivisioni} suddivisioni esaminate, ` +
+    `${scenario2.scartate} scartate perché superano i ${DATI.capacita.s2} kg su un veicolo, ` +
+    `${scenario2.ammissibili.length} ammissibili.`;
+
+  const cellaVeicolo = (veicolo) => `
+    <td>
+      ${nomiClienti(veicolo.sequenza, ", ")}<br>
+      <span class="hint">${formattaNumero(veicolo.km)} km · ${veicolo.kg} kg</span>
+    </td>`;
+
+  // le divisioni arrivano già in ordine di km: la prima è la migliore e viene evidenziata
+  const righe = scenario2.ammissibili.map(
+    (suddivisione, i) => `
+    <tr class="${i === 0 ? "best" : ""}">
+      <td>${i + 1}</td>
+      ${suddivisione.veicoli.map(cellaVeicolo).join("")}
+      <td class="num"><strong>${formattaNumero(suddivisione.km)}</strong></td>
+    </tr>`,
+  );
+
+  $("#s2-table").innerHTML = `
+    <thead>
+      <tr><th>#</th><th>Veicolo 1</th><th>Veicolo 2</th><th class="num">Km</th></tr>
+    </thead>
+    <tbody>${righe.join("")}</tbody>`;
+}
+
+/** Scenario 1: gli ordini di visita più corti con un solo furgone. */
+function disegnaTabellaScenario1() {
+  $("#s1-summary").textContent =
+    `${SCENARIO_1.esaminate} sequenze esaminate: ${SCENARIO_1.n_ottime} raggiungono ` +
+    `lo stesso minimo di ${formattaNumero(SCENARIO_1.km)} km, perché i comuni si trovano ` +
+    `lungo la stessa strada di fondovalle. Sono mostrate le prime ${SCENARIO_1.classifica.length}.`;
+
+  // evidenzia tutti i giri lunghi quanto il migliore (possono essere più di uno)
+  const righe = SCENARIO_1.classifica.map(
+    (sequenza, i) => `
+    <tr class="${sequenza.km === SCENARIO_1.km ? "best" : ""}">
+      <td>${i + 1}</td>
+      <td>${nomiClienti(sequenza.sequenza, " → ")}</td>
+      <td class="num">${formattaNumero(sequenza.km)}</td>
+    </tr>`,
+  );
+
+  $("#s1-table").innerHTML = `
+    <thead>
+      <tr><th>#</th><th>Sequenza di consegna</th><th class="num">Km</th></tr>
+    </thead>
+    <tbody>${righe.join("")}</tbody>`;
+}
+
+/** La tabella con i km di strada tra ogni coppia di paesi. */
+function disegnaMatriceDistanze() {
+  const intestazione = NOMI_NODI.map((nome) => `<th class="num">${nome}</th>`);
+
+  const righe = DATI.distanze.map((riga, i) => {
+    // da un paese a se stesso la distanza è 0: si scrive un trattino
+    const celle = riga.map(
+      (km) => `<td class="num">${km ? formattaNumero(km) : "–"}</td>`,
+    );
+    return `<tr><td><strong>${NOMI_NODI[i]}</strong></td>${celle.join("")}</tr>`;
+  });
+
+  $("#matrix").innerHTML = `
+    <thead><tr><th>Da / A</th>${intestazione.join("")}</tr></thead>
+    <tbody>${righe.join("")}</tbody>`;
+}
+
+/** Scrive tutte e tre le tabelle. */
+function disegnaTabelleStatiche() {
+  disegnaTabellaScenario2();
+  disegnaTabellaScenario1();
+  disegnaMatriceDistanze();
+}
+</script>
+    <script>
+/* =============================================================
+   Questo file avvia la pagina: è l'ultimo a essere caricato.
+
+   La pagina carica i file in quest'ordine, e ognuno può usare
+   quello che hanno preparato i precedenti:
+     utilita.js     scrivere numeri, euro e orari
+     parametri.js   i costi e l'elenco dei cursori
+     modello.js     il calcolo dei costi dei due scenari
+     controlli.js   il riquadro con i cursori
+     grafo.js       il disegno con i giri dei furgoni
+     costi.js       riquadri in cima, tabella dei costi e barre
+     sensibilita.js il grafico "Sensibilità"
+     tabelle.js     le tabelle in fondo alla pagina
+     main.js        questo file
+   ============================================================= */
+
+/** Rifà i calcoli e aggiorna tutte le parti della pagina che dipendono dai cursori. */
+function aggiorna() {
+  for (const controllo of TUTTI_I_CONTROLLI) {
+    $(`#o-${controllo.chiave}`).textContent = controllo.formatta(
+      parametriCorrenti[controllo.chiave],
+    );
+  }
+  const risultati = valutaScenari(parametriCorrenti);
+  disegnaIndicatori(risultati);
+  disegnaTabellaCosti(risultati);
+  disegnaBarre(risultati);
+  disegnaGraficoSensibilita();
+}
+
+/**
+ * Colori chiari o scuri: all'inizio si usano quelli scelti sul computer
+ * dell'utente, poi il pulsante con la luna in alto a destra li alterna.
+ */
+function inizializzaTema() {
+  const radice = document.documentElement;
+  const preferisceScuro = matchMedia("(prefers-color-scheme: dark)").matches;
+  let tema = preferisceScuro ? "dark" : "light";
+  radice.setAttribute("data-theme", tema);
+
+  $("#theme").addEventListener("click", () => {
+    tema = tema === "dark" ? "light" : "dark";
+    radice.setAttribute("data-theme", tema);
+  });
+}
+
+// avvio della pagina
+inizializzaTema();
+creaControlli();
+creaSelettoreSensibilita();
+collegaPulsantiVista();
+disegnaTabelleStatiche();
+disegnaGrafo();
+aggiorna();
+</script>
+  </body>
+</html>
