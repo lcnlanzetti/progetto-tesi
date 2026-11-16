@@ -1,0 +1,27 @@
+/* Adattamenti per schermi stretti e movimento ridotto (caricato per ultimo) */
+
+@media (max-width: 980px) {
+  .grid-main,
+  .two {
+    grid-template-columns: 1fr;
+  }
+  .kpis {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+@media (max-width: 520px) {
+  .wrap {
+    padding: 0 var(--space-4);
+  }
+  .kpis {
+    grid-template-columns: 1fr;
+  }
+  .card-body {
+    padding: var(--space-4);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bar div {
+    transition: none;
+  }
+}

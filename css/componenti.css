@@ -1,0 +1,326 @@
+/* KPI, grafo, controlli, tabelle, barre, grafico */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  margin: var(--space-6) 0;
+}
+.kpi {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: var(--space-4) var(--space-5);
+  box-shadow: var(--shadow);
+}
+.kpi-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.kpi-value {
+  font-size: var(--text-xl);
+  font-weight: 650;
+  margin-top: var(--space-1);
+  letter-spacing: -0.01em;
+}
+.kpi-sub {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.kpi.verdict {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.kpi.verdict .kpi-value {
+  font-size: var(--text-lg);
+  line-height: 1.25;
+  margin-top: var(--space-2);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  flex: none;
+}
+
+.seg {
+  display: inline-flex;
+  background: var(--surface-2);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 2px;
+}
+.seg button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-1) var(--space-3);
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.seg button[aria-pressed="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+  font-weight: 600;
+}
+
+.graph-wrap {
+  position: relative;
+}
+svg.graph {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.graph .edge {
+  stroke: var(--edge);
+  stroke-width: 1.2;
+}
+.graph .edge-label {
+  font-size: 11px;
+  fill: var(--faint);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+.graph .route {
+  fill: none;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.graph .node-circle {
+  fill: var(--surface);
+  stroke: var(--text);
+  stroke-width: 1.5;
+}
+.graph .node-depot {
+  fill: var(--accent);
+  stroke: var(--accent);
+}
+.graph .node-name {
+  font-size: 13px;
+  font-weight: 600;
+  fill: var(--text);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+.graph .node-kg {
+  font-size: 11px;
+  fill: var(--muted);
+  paint-order: stroke;
+  stroke: var(--surface);
+  stroke-width: 4px;
+}
+.graph .step {
+  font-size: 10px;
+  font-weight: 700;
+  fill: #fff;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  margin-top: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.legend i {
+  width: 18px;
+  height: 3px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+.routes {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+.route-card {
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  padding: var(--space-3) var(--space-4);
+}
+.route-card .r-title {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.route-card .r-path {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.controls {
+  display: grid;
+  gap: var(--space-5);
+}
+.group-title {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  margin: 0 0 var(--space-3);
+  font-weight: 600;
+}
+.ctrl {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--space-1) var(--space-3);
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+.ctrl label {
+  font-size: var(--text-sm);
+}
+.ctrl output {
+  font-size: var(--text-sm);
+  font-weight: 650;
+  font-family: var(--font-mono);
+}
+.ctrl input[type="range"] {
+  grid-column: 1 / -1;
+  width: 100%;
+  accent-color: var(--accent);
+  margin: 0;
+}
+.ctrl .src {
+  grid-column: 1 / -1;
+  font-size: var(--text-xs);
+  color: var(--faint);
+  margin-top: -2px;
+}
+.btn {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  padding: var(--space-2) var(--space-4);
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn:hover {
+  background: var(--surface-2);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+th,
+td {
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+th {
+  font-size: var(--text-xs);
+  color: var(--muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+td.num,
+th.num {
+  text-align: right;
+  white-space: nowrap;
+}
+tr.total td {
+  font-weight: 700;
+  border-bottom: 0;
+  border-top: 2px solid var(--text);
+}
+tr.best td {
+  background: var(--accent-soft);
+}
+.pos {
+  color: var(--warn);
+}
+.neg {
+  color: var(--good);
+}
+.table-scroll {
+  overflow-x: auto;
+}
+
+.bars {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+.bar-row .bar-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
+}
+.bar {
+  display: flex;
+  height: 22px;
+  border-radius: 5px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.bar div {
+  height: 100%;
+  transition: width 0.35s ease;
+}
+.bar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--muted);
+  margin-top: var(--space-3);
+}
+.bar-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+.bar-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  display: inline-block;
+}
+
+svg.chart {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.chart .axis line,
+.chart .axis path {
+  stroke: var(--border);
+}
+.chart text {
+  font-size: 11px;
+  fill: var(--muted);
+}
+.chart .grid {
+  stroke: var(--border);
+  stroke-dasharray: 2 3;
+}
