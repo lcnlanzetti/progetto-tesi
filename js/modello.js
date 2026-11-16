@@ -1,15 +1,17 @@
 /* =============================================================
-   Modello di costo (lo stesso di confronto_economico.py).
+   Il calcolo dei costi: è lo stesso di confronto_economico.py,
+   ripetuto qui perché la pagina possa rifarlo ogni volta che
+   si sposta un cursore.
 
-   Scenario 1: un furgone medio fa un unico giro su tutti i clienti.
-   Scenario 2: due furgoni compatti si dividono i clienti; si usa
-               la suddivisione migliore trovata dall'enumerazione.
+   Scenario 1: un furgone medio visita da solo tutti i clienti.
+   Scenario 2: due furgoni compatti si dividono i clienti, nel
+               modo più corto trovato da enumerazione_percorsi.py.
    ============================================================= */
 
 const SCENARIO_1 = DATI.scenario1;
 const MIGLIORE_SCENARIO_2 = DATI.scenario2.ammissibili[0];
 
-/** Caratteristiche di costo di un tipo di veicolo, lette dai parametri correnti. */
+/** Consumo, usura e costo fisso del tipo di furgone indicato ("medio" o "compatto"). */
 function caratteristicheVeicolo(tipoVeicolo, parametri) {
   if (tipoVeicolo === "medio") {
     return {
@@ -26,9 +28,9 @@ function caratteristicheVeicolo(tipoVeicolo, parametri) {
 }
 
 /**
- * Costo giornaliero di un singolo giro di consegna.
- * Le chiavi fisso, carburante, altri e autista sono le voci di costo
- * mostrate nella tabella (vedi VOCI_DI_COSTO in costi.js).
+ * Quanto costa e quanto dura il giro di un singolo furgone.
+ * fisso, carburante, altri (usura) e autista sono le quattro voci
+ * di costo che compaiono nella tabella della pagina.
  */
 function costoGiro(km, numeroClienti, tipoVeicolo, parametri) {
   const veicolo = caratteristicheVeicolo(tipoVeicolo, parametri);
@@ -54,7 +56,7 @@ function costoGiro(km, numeroClienti, tipoVeicolo, parametri) {
   };
 }
 
-/** Valori che, nello scenario 2, si ottengono sommando i due veicoli. */
+/** I valori che, nello scenario 2, si sommano tra i due furgoni. */
 const VOCI_DA_SOMMARE = [
   "km",
   "ore",
@@ -66,9 +68,10 @@ const VOCI_DA_SOMMARE = [
 ];
 
 /**
- * Calcola i costi dei due scenari con i parametri indicati.
- * "durata" è l'ora in cui finiscono le consegne: nello scenario 2 i due
- * furgoni lavorano in parallelo, quindi conta il giro più lungo.
+ * Calcola i costi dei due scenari con i valori indicati.
+ * "durata" dice dopo quanto tempo tutte le consegne sono finite:
+ * nello scenario 2 i due furgoni partono insieme, quindi si finisce
+ * quando torna quello con il giro più lungo.
  */
 function valutaScenari(parametri) {
   const scenario1 = costoGiro(

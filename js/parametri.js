@@ -1,14 +1,15 @@
 /* =============================================================
-   Parametri del modello di costo e definizione dei cursori
-   che permettono di modificarli.
+   I costi usati nei calcoli (prezzo del gasolio, stipendio degli
+   autisti, ...) e l'elenco dei cursori con cui si possono cambiare
+   nella pagina.
    ============================================================= */
 
-/** Parametri così come arrivano dagli script Python. */
+/** I costi di partenza, così come li ha scritti confronto_economico.py. */
 const PARAMETRI_DATI = DATI.parametri;
 const FURGONE_MEDIO = PARAMETRI_DATI.veicoli.furgone_medio;
 const FURGONE_COMPATTO = PARAMETRI_DATI.veicoli.furgone_compatto;
 
-/** Valori iniziali, in forma "piatta": una chiave per ogni cursore. */
+/** Gli stessi valori di partenza, riorganizzati con un nome per ogni cursore. */
 const VALORI_INIZIALI = {
   prezzo_gasolio: PARAMETRI_DATI.prezzo_gasolio,
   costo_orario: PARAMETRI_DATI.costo_orario,
@@ -25,16 +26,16 @@ const VALORI_INIZIALI = {
   usura_comp: FURGONE_COMPATTO.altri_costi_km,
 };
 
-/** Valori attualmente impostati dall'utente con i cursori. */
+/** I valori scelti in questo momento con i cursori (all'inizio, quelli di partenza). */
 let parametriCorrenti = { ...VALORI_INIZIALI };
 
 /*
-  Ogni cursore è descritto da:
-    chiave     nome del parametro in parametriCorrenti
-    etichetta  testo mostrato all'utente
-    min, max, passo  intervallo del cursore
-    formatta   funzione che trasforma il valore in testo (con unità di misura)
-    fonte      (facoltativa) da dove proviene il valore iniziale
+  Elenco dei cursori, divisi in gruppi. Per ognuno si indica:
+    chiave           il nome del costo che il cursore modifica
+    etichetta        il testo scritto sopra il cursore
+    min, max, passo  valore minimo, massimo e di quanto si sposta ogni scatto
+    formatta         come scrivere il valore, con l'unità di misura (€/l, km/h, ...)
+    fonte            (non sempre presente) da dove viene il valore di partenza
 */
 const GRUPPI_DI_CONTROLLI = [
   {
@@ -150,12 +151,12 @@ const GRUPPI_DI_CONTROLLI = [
   },
 ];
 
-/** Tutti i cursori in un'unica lista, senza la divisione in gruppi. */
+/** Tutti i cursori in un'unica lista, senza dividerli in gruppi. */
 const TUTTI_I_CONTROLLI = GRUPPI_DI_CONTROLLI.flatMap(
   (gruppo) => gruppo.controlli,
 );
 
-/** Accesso diretto a un cursore dalla sua chiave, es. CONTROLLO_PER_CHIAVE.velocita */
+/** Per trovare subito un cursore dal suo nome, es. CONTROLLO_PER_CHIAVE.velocita */
 const CONTROLLO_PER_CHIAVE = Object.fromEntries(
   TUTTI_I_CONTROLLI.map((controllo) => [controllo.chiave, controllo]),
 );

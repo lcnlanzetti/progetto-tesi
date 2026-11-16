@@ -1,7 +1,9 @@
 /* =============================================================
-   Pannello "Parametri di costo": crea i cursori e li collega
-   a parametriCorrenti.
+   Il riquadro "Parametri di costo": crea i cursori e fa in modo
+   che, quando se ne sposta uno, la pagina ricalcoli tutto.
    ============================================================= */
+
+/** Il codice HTML di un cursore: titolo, valore attuale, barra e fonte. */
 
 function htmlControllo(controllo) {
   const id = `c-${controllo.chiave}`;
@@ -19,6 +21,7 @@ function htmlControllo(controllo) {
     </div>`;
 }
 
+/** Il codice HTML di un gruppo di cursori, con il suo titolo. */
 function htmlGruppoControlli(gruppo) {
   return `
     <div>
@@ -27,7 +30,7 @@ function htmlGruppoControlli(gruppo) {
     </div>`;
 }
 
-/** Riporta tutti i cursori ai valori iniziali. */
+/** Pulsante "Valori iniziali": riporta tutti i cursori ai valori di partenza. */
 function ripristinaValoriIniziali() {
   parametriCorrenti = { ...VALORI_INIZIALI };
   for (const controllo of TUTTI_I_CONTROLLI) {
@@ -36,12 +39,13 @@ function ripristinaValoriIniziali() {
   aggiorna();
 }
 
+/** Mette i cursori nella pagina e li collega ai calcoli. */
 function creaControlli() {
   $("#controls").innerHTML = GRUPPI_DI_CONTROLLI.map(htmlGruppoControlli).join(
     "",
   );
 
-  // ogni spostamento di un cursore aggiorna il parametro e ricalcola la pagina
+  // quando si sposta un cursore: salva il nuovo valore e ricalcola la pagina
   for (const controllo of TUTTI_I_CONTROLLI) {
     $(`#c-${controllo.chiave}`).addEventListener("input", (evento) => {
       parametriCorrenti[controllo.chiave] = parseFloat(evento.target.value);

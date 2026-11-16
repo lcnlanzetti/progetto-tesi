@@ -1,20 +1,20 @@
 /* =============================================================
-   Punto di ingresso: avvia la pagina.
+   Questo file avvia la pagina: è l'ultimo a essere caricato.
 
-   I file sono caricati in quest'ordine da template_pagina.html,
-   e ognuno usa ciò che è definito nei precedenti:
-     utilita.js     formattazione dei valori
-     parametri.js   parametri correnti e definizione dei cursori
-     modello.js     calcolo dei costi dei due scenari
-     controlli.js   pannello dei cursori
-     grafo.js       grafo con i percorsi
-     costi.js       KPI, tabella dei costi e barre
-     sensibilita.js grafico di sensibilità
-     tabelle.js     tabelle statiche
-     main.js        (questo file)
+   La pagina carica i file in quest'ordine, e ognuno può usare
+   quello che hanno preparato i precedenti:
+     utilita.js     scrivere numeri, euro e orari
+     parametri.js   i costi e l'elenco dei cursori
+     modello.js     il calcolo dei costi dei due scenari
+     controlli.js   il riquadro con i cursori
+     grafo.js       il disegno con i giri dei furgoni
+     costi.js       riquadri in cima, tabella dei costi e barre
+     sensibilita.js il grafico "Sensibilità"
+     tabelle.js     le tabelle in fondo alla pagina
+     main.js        questo file
    ============================================================= */
 
-/** Ricalcola e ridisegna tutto ciò che dipende dai cursori. */
+/** Rifà i calcoli e aggiorna tutte le parti della pagina che dipendono dai cursori. */
 function aggiorna() {
   for (const controllo of TUTTI_I_CONTROLLI) {
     $(`#o-${controllo.chiave}`).textContent = controllo.formatta(
@@ -28,7 +28,10 @@ function aggiorna() {
   disegnaGraficoSensibilita();
 }
 
-/** Tema chiaro/scuro: parte da quello del sistema operativo, poi il pulsante lo alterna. */
+/**
+ * Colori chiari o scuri: all'inizio si usano quelli scelti sul computer
+ * dell'utente, poi il pulsante con la luna in alto a destra li alterna.
+ */
 function inizializzaTema() {
   const radice = document.documentElement;
   const preferisceScuro = matchMedia("(prefers-color-scheme: dark)").matches;
@@ -41,6 +44,7 @@ function inizializzaTema() {
   });
 }
 
+// avvio della pagina
 inizializzaTema();
 creaControlli();
 creaSelettoreSensibilita();

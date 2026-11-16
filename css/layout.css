@@ -1,4 +1,5 @@
-/* Base, intestazione, griglia principale, schede, footer */
+/* La struttura della pagina: barra in alto, disposizione dei riquadri
+   sullo schermo, aspetto dei riquadri e note in fondo. */
 
 * {
   box-sizing: border-box;

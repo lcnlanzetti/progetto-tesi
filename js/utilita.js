@@ -1,12 +1,17 @@
 /* =============================================================
-   Utilità comuni a tutti gli altri file:
-   selezione degli elementi della pagina e formattazione dei valori.
+   Piccoli strumenti usati da tutti gli altri file:
+   trovare un elemento nella pagina e scrivere numeri, euro e
+   orari nel formato italiano (virgola per i decimali, punto per
+   le migliaia).
    ============================================================= */
 
-/** Restituisce il primo elemento della pagina che corrisponde al selettore CSS. */
+/**
+ * Trova un elemento della pagina. Esempio: $("#reset") restituisce
+ * il pulsante che nel file HTML ha id="reset".
+ */
 const $ = (selettore) => document.querySelector(selettore);
 
-/** Nomi dei nodi del grafo, nello stesso ordine di DATI.nodi (l'indice 0 è il deposito). */
+/** Nomi dei paesi, nello stesso ordine dei dati: il numero 0 è il deposito di Monno. */
 const NOMI_NODI = DATI.nodi.map((nodo) => nodo.nome);
 
 /** 1234.5 → "1.234,50 €" */
@@ -20,6 +25,7 @@ function formattaEuro(valore) {
 
 /** 1234.5 → "1.235 €" (arrotondato all'euro, usato per i totali annui). */
 function formattaEuroIntero(valore) {
+  // la "regola" tra le barre / / inserisce un punto ogni tre cifre, partendo da destra
   const conPuntiDelleMigliaia = Math.round(valore)
     .toString()
     .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -35,8 +41,9 @@ function formattaNumero(valore, decimali = 1) {
 }
 
 /**
- * Aggiunge il segno davanti a un valore già formattato.
- * conSegno(-3, formattaEuro) → "−3,00 €"   (zero resta senza segno)
+ * Scrive un valore con il segno + o − davanti, usando la funzione
+ * di formattazione indicata. Lo zero resta senza segno.
+ * Esempio: conSegno(-3, formattaEuro) → "−3,00 €"
  */
 function conSegno(valore, formatta) {
   let segno = "";
@@ -45,7 +52,7 @@ function conSegno(valore, formatta) {
   return segno + formatta(Math.abs(valore));
 }
 
-/** Converte ore decimali in testo: 1.75 → "1h 45min", 0.5 → "30 min". */
+/** Scrive una durata in ore e minuti: 1.75 ore → "1h 45min", 0.5 ore → "30 min". */
 function formattaDurata(oreDecimali) {
   let ore = Math.floor(oreDecimali);
   let minuti = Math.round((oreDecimali - ore) * 60);
@@ -58,7 +65,7 @@ function formattaDurata(oreDecimali) {
   return `${ore}h ${String(minuti).padStart(2, "0")}min`;
 }
 
-/** Descrive un giro completo, con partenza e ritorno al deposito: "Monno → A → B → Monno". */
+/** Scrive un giro con i nomi dei paesi, partendo e tornando a Monno: "Monno → Edolo → Malonno → Monno". */
 function descriviPercorso(sequenzaClienti) {
   const giroCompleto = [0, ...sequenzaClienti, 0];
   return giroCompleto.map((indice) => NOMI_NODI[indice]).join(" → ");

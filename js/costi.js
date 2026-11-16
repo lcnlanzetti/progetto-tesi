@@ -1,9 +1,10 @@
 /* =============================================================
-   Riquadri in alto (KPI), tabella dei costi giornalieri
-   e barre con la composizione del costo.
+   I quattro riquadri con i numeri principali in cima alla pagina,
+   la tabella dei costi di un giorno e le barre colorate che
+   mostrano di cosa è fatto il costo.
    ============================================================= */
 
-/** Voci di costo calcolate da costoGiro(), con il colore usato nelle barre. */
+/** Le quattro voci di costo, con il colore usato per ognuna nelle barre. */
 const VOCI_DI_COSTO = [
   { chiave: "fisso", etichetta: "Costi fissi veicoli", colore: "#7D8B6A" },
   { chiave: "carburante", etichetta: "Carburante", colore: "#C9A227" },
@@ -11,10 +12,13 @@ const VOCI_DI_COSTO = [
   { chiave: "autista", etichetta: "Autisti", colore: "#4F7A94" },
 ];
 
-/** Sotto questa soglia (in valore assoluto) una differenza è considerata zero. */
+/** Differenze più piccole di questa (meno di mezzo centesimo) contano come zero. */
 const TOLLERANZA_DIFFERENZA = 0.004;
 
-/** Classe CSS della cella "Differenza": pos = scenario 2 costa di più, neg = costa di meno. */
+/**
+ * Il colore della colonna "Differenza":
+ * "pos" se lo scenario 2 costa di più, "neg" se costa di meno, nessuno se sono pari.
+ */
 function classeDifferenza(differenza) {
   if (differenza > TOLLERANZA_DIFFERENZA) return "pos";
   if (differenza < -TOLLERANZA_DIFFERENZA) return "neg";
@@ -23,6 +27,7 @@ function classeDifferenza(differenza) {
 
 /* ---------- tabella ---------- */
 
+/** Una riga della tabella: nome della voce, valore nei due scenari e differenza. */
 function htmlRigaTabella(etichetta, valore1, valore2, formatta) {
   const differenza = valore2 - valore1;
   return `
@@ -34,6 +39,7 @@ function htmlRigaTabella(etichetta, valore1, valore2, formatta) {
     </tr>`;
 }
 
+/** La tabella "Costo giornaliero per voce". */
 function disegnaTabellaCosti({ scenario1, scenario2 }) {
   const formattaKm = (v) => formattaNumero(v) + " km";
 
@@ -55,7 +61,7 @@ function disegnaTabellaCosti({ scenario1, scenario2 }) {
     ),
   ];
 
-  // nel totale anche una differenza minima viene colorata
+  // nella riga del totale si colora anche una differenza piccolissima
   const differenzaTotale = scenario2.totale - scenario1.totale;
   const rigaTotale = `
     <tr class="total">
@@ -65,7 +71,7 @@ function disegnaTabellaCosti({ scenario1, scenario2 }) {
       <td class="num ${differenzaTotale > 0 ? "pos" : "neg"}">${conSegno(differenzaTotale, formattaEuro)}</td>
     </tr>`;
 
-  // la durata non ha colore: finire prima non è di per sé un costo
+  // la durata non è colorata: finire prima non è un costo
   const rigaDurata = `
     <tr>
       <td>Consegne completate dopo</td>
@@ -88,7 +94,10 @@ function disegnaTabellaCosti({ scenario1, scenario2 }) {
 
 /* ---------- barre ---------- */
 
-/** Una barra orizzontale divisa per voce di costo; massimo = lunghezza della barra piena. */
+/**
+ * Una barra orizzontale divisa in pezzi colorati, uno per voce di costo.
+ * "massimo" è l'importo che corrisponde alla barra piena.
+ */
 function htmlBarra(scenario, titolo, massimo) {
   const segmenti = VOCI_DI_COSTO.map((voce) => {
     const larghezza = (scenario[voce.chiave] / massimo) * 100;
@@ -102,8 +111,9 @@ function htmlBarra(scenario, titolo, massimo) {
     </div>`;
 }
 
+/** Le due barre (una per scenario) e la legenda dei colori. */
 function disegnaBarre({ scenario1, scenario2 }) {
-  // la barra più lunga occupa il 96% circa, lasciando un po' di respiro
+  // la barra più lunga arriva a circa il 96%, così resta un po' di spazio
   const massimo = Math.max(scenario1.totale, scenario2.totale) * 1.04;
 
   $("#bars").innerHTML =
@@ -115,8 +125,9 @@ function disegnaBarre({ scenario1, scenario2 }) {
   ).join("");
 }
 
-/* ---------- riquadri KPI ---------- */
+/* ---------- i quattro riquadri in cima ---------- */
 
+/** Costo dei due scenari, differenza, e quale scenario conviene. */
 function disegnaIndicatori({ scenario1, scenario2 }) {
   const differenza = scenario2.totale - scenario1.totale;
   const giorniAnno = PARAMETRI_DATI.giorni_anno;
@@ -133,7 +144,7 @@ function disegnaIndicatori({ scenario1, scenario2 }) {
   $("#k-diff-sub").textContent =
     `${conSegno(differenza * giorniAnno, formattaEuroIntero)} all'anno (${giorniAnno} giorni)`;
 
-  // verdetto
+  // ultimo riquadro: quale scenario conviene (pari se la differenza è sotto il mezzo centesimo)
   if (Math.abs(differenza) < 0.005) {
     $("#k-verdict").textContent = "I due scenari si equivalgono";
     $("#k-verdict-sub").textContent = "Punto di pareggio raggiunto";

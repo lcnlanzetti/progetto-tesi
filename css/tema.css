@@ -1,4 +1,6 @@
-/* Colori (chiaro/scuro), tipografia e spaziature */
+/* I colori della pagina (versione chiara e versione scura), i caratteri
+   e le distanze tra gli elementi. Gli altri file CSS usano questi nomi,
+   ad esempio var(--accent), così basta cambiare un colore qui. */
 
 :root,
 [data-theme="light"] {
