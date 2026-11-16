@@ -1,85 +1,154 @@
-  /* ---------- tabella costi e barre ---------- */
-  const VOCI = [
-    ["fisso", "Costi fissi veicoli", "#7D8B6A"],
-    ["carburante", "Carburante", "#C9A227"],
-    ["altri", "Usura e manutenzione", "#9C7B5B"],
-    ["autista", "Autisti", "#4F7A94"],
+/* =============================================================
+   Riquadri in alto (KPI), tabella dei costi giornalieri
+   e barre con la composizione del costo.
+   ============================================================= */
+
+/** Voci di costo calcolate da costoGiro(), con il colore usato nelle barre. */
+const VOCI_DI_COSTO = [
+  { chiave: "fisso", etichetta: "Costi fissi veicoli", colore: "#7D8B6A" },
+  { chiave: "carburante", etichetta: "Carburante", colore: "#C9A227" },
+  { chiave: "altri", etichetta: "Usura e manutenzione", colore: "#9C7B5B" },
+  { chiave: "autista", etichetta: "Autisti", colore: "#4F7A94" },
+];
+
+/** Sotto questa soglia (in valore assoluto) una differenza è considerata zero. */
+const TOLLERANZA_DIFFERENZA = 0.004;
+
+/** Classe CSS della cella "Differenza": pos = scenario 2 costa di più, neg = costa di meno. */
+function classeDifferenza(differenza) {
+  if (differenza > TOLLERANZA_DIFFERENZA) return "pos";
+  if (differenza < -TOLLERANZA_DIFFERENZA) return "neg";
+  return "";
+}
+
+/* ---------- tabella ---------- */
+
+function htmlRigaTabella(etichetta, valore1, valore2, formatta) {
+  const differenza = valore2 - valore1;
+  return `
+    <tr>
+      <td>${etichetta}</td>
+      <td class="num">${formatta(valore1)}</td>
+      <td class="num">${formatta(valore2)}</td>
+      <td class="num ${classeDifferenza(differenza)}">${conSegno(differenza, formatta)}</td>
+    </tr>`;
+}
+
+function disegnaTabellaCosti({ scenario1, scenario2 }) {
+  const formattaKm = (v) => formattaNumero(v) + " km";
+
+  const righeVoci = [
+    htmlRigaTabella("Km percorsi", scenario1.km, scenario2.km, formattaKm),
+    htmlRigaTabella(
+      "Ore di lavoro autisti",
+      scenario1.ore,
+      scenario2.ore,
+      formattaDurata,
+    ),
+    ...VOCI_DI_COSTO.map((voce) =>
+      htmlRigaTabella(
+        voce.etichetta,
+        scenario1[voce.chiave],
+        scenario2[voce.chiave],
+        formattaEuro,
+      ),
+    ),
   ];
-  function drawCosts(r) {
-    const { s1, s2 } = r;
-    const rows = [
-      [
-        "Km percorsi",
-        s1.km,
-        s2.km,
-        (v) => fmtNum(v) + " km",
-        (v) => signed(v, (x) => fmtNum(x) + " km"),
-      ],
-      [
-        "Ore di lavoro autisti",
-        s1.ore,
-        s2.ore,
-        hhmm,
-        (v) => signed(v, hhmm),
-      ],
-      ...VOCI.map(([k, l]) => [
-        l,
-        s1[k],
-        s2[k],
-        fmtEur,
-        (v) => signed(v, fmtEur),
-      ]),
-    ];
-    const d = s2.totale - s1.totale;
-    $("#cost-table").innerHTML =
-      `<thead><tr><th>Voce</th><th class="num">Scenario 1</th><th class="num">Scenario 2</th><th class="num">Differenza</th></tr></thead><tbody>
-${rows
-  .map(([l, a, b, f, fd]) => {
-    const x = b - a;
-    return `<tr><td>${l}</td><td class="num">${f(a)}</td><td class="num">${f(b)}</td><td class="num ${x > 0.004 ? "pos" : x < -0.004 ? "neg" : ""}">${fd(x)}</td></tr>`;
-  })
-  .join("")}
-<tr class="total"><td>Totale giornaliero</td><td class="num">${fmtEur(s1.totale)}</td><td class="num">${fmtEur(s2.totale)}</td><td class="num ${d > 0 ? "pos" : "neg"}">${signed(d, fmtEur)}</td></tr>
-<tr><td>Consegne completate dopo</td><td class="num">${hhmm(s1.durata)}</td><td class="num">${hhmm(s2.durata)}</td><td class="num">${signed(s2.durata - s1.durata, hhmm)}</td></tr>
-</tbody>`;
-    const max = Math.max(s1.totale, s2.totale) * 1.04;
-    const bar = (
-      s,
-      t,
-    ) => `<div class="bar-row"><div class="bar-label"><span>${t}</span><strong>${fmtEur(s.totale)}</strong></div>
-<div class="bar">${VOCI.map(([k, l, c]) => `<div style="width:${(s[k] / max) * 100}%;background:${c}" title="${l}: ${fmtEur(s[k])}"></div>`).join("")}</div></div>`;
-    $("#bars").innerHTML =
-      bar(s1, "Scenario 1 · un veicolo") +
-      bar(s2, "Scenario 2 · due veicoli");
-    $("#bar-legend").innerHTML = VOCI.map(
-      ([, l, c]) => `<span><i style="background:${c}"></i>${l}</span>`,
-    ).join("");
+
+  // nel totale anche una differenza minima viene colorata
+  const differenzaTotale = scenario2.totale - scenario1.totale;
+  const rigaTotale = `
+    <tr class="total">
+      <td>Totale giornaliero</td>
+      <td class="num">${formattaEuro(scenario1.totale)}</td>
+      <td class="num">${formattaEuro(scenario2.totale)}</td>
+      <td class="num ${differenzaTotale > 0 ? "pos" : "neg"}">${conSegno(differenzaTotale, formattaEuro)}</td>
+    </tr>`;
+
+  // la durata non ha colore: finire prima non è di per sé un costo
+  const rigaDurata = `
+    <tr>
+      <td>Consegne completate dopo</td>
+      <td class="num">${formattaDurata(scenario1.durata)}</td>
+      <td class="num">${formattaDurata(scenario2.durata)}</td>
+      <td class="num">${conSegno(scenario2.durata - scenario1.durata, formattaDurata)}</td>
+    </tr>`;
+
+  $("#cost-table").innerHTML = `
+    <thead>
+      <tr>
+        <th>Voce</th>
+        <th class="num">Scenario 1</th>
+        <th class="num">Scenario 2</th>
+        <th class="num">Differenza</th>
+      </tr>
+    </thead>
+    <tbody>${righeVoci.join("")}${rigaTotale}${rigaDurata}</tbody>`;
+}
+
+/* ---------- barre ---------- */
+
+/** Una barra orizzontale divisa per voce di costo; massimo = lunghezza della barra piena. */
+function htmlBarra(scenario, titolo, massimo) {
+  const segmenti = VOCI_DI_COSTO.map((voce) => {
+    const larghezza = (scenario[voce.chiave] / massimo) * 100;
+    const descrizione = `${voce.etichetta}: ${formattaEuro(scenario[voce.chiave])}`;
+    return `<div style="width:${larghezza}%;background:${voce.colore}" title="${descrizione}"></div>`;
+  });
+  return `
+    <div class="bar-row">
+      <div class="bar-label"><span>${titolo}</span><strong>${formattaEuro(scenario.totale)}</strong></div>
+      <div class="bar">${segmenti.join("")}</div>
+    </div>`;
+}
+
+function disegnaBarre({ scenario1, scenario2 }) {
+  // la barra più lunga occupa il 96% circa, lasciando un po' di respiro
+  const massimo = Math.max(scenario1.totale, scenario2.totale) * 1.04;
+
+  $("#bars").innerHTML =
+    htmlBarra(scenario1, "Scenario 1 · un veicolo", massimo) +
+    htmlBarra(scenario2, "Scenario 2 · due veicoli", massimo);
+
+  $("#bar-legend").innerHTML = VOCI_DI_COSTO.map(
+    (voce) => `<span><i style="background:${voce.colore}"></i>${voce.etichetta}</span>`,
+  ).join("");
+}
+
+/* ---------- riquadri KPI ---------- */
+
+function disegnaIndicatori({ scenario1, scenario2 }) {
+  const differenza = scenario2.totale - scenario1.totale;
+  const giorniAnno = PARAMETRI_DATI.giorni_anno;
+
+  $("#k-s1").textContent = formattaEuro(scenario1.totale);
+  $("#k-s1-sub").textContent =
+    `${formattaNumero(scenario1.km)} km · consegne in ${formattaDurata(scenario1.durata)}`;
+
+  $("#k-s2").textContent = formattaEuro(scenario2.totale);
+  $("#k-s2-sub").textContent =
+    `${formattaNumero(scenario2.km)} km · consegne in ${formattaDurata(scenario2.durata)}`;
+
+  $("#k-diff").textContent = conSegno(differenza, formattaEuro);
+  $("#k-diff-sub").textContent =
+    `${conSegno(differenza * giorniAnno, formattaEuroIntero)} all'anno (${giorniAnno} giorni)`;
+
+  // verdetto
+  if (Math.abs(differenza) < 0.005) {
+    $("#k-verdict").textContent = "I due scenari si equivalgono";
+    $("#k-verdict-sub").textContent = "Punto di pareggio raggiunto";
+    return;
   }
 
-  /* ---------- KPI ---------- */
-  function drawKpis(r) {
-    const { s1, s2 } = r,
-      d = s2.totale - s1.totale,
-      g = P0.giorni_anno;
-    $("#k-s1").textContent = fmtEur(s1.totale);
-    $("#k-s1-sub").textContent =
-      `${fmtNum(s1.km)} km · consegne in ${hhmm(s1.durata)}`;
-    $("#k-s2").textContent = fmtEur(s2.totale);
-    $("#k-s2-sub").textContent =
-      `${fmtNum(s2.km)} km · consegne in ${hhmm(s2.durata)}`;
-    $("#k-diff").textContent = signed(d, fmtEur);
-    $("#k-diff-sub").textContent =
-      `${signed(d * g, fmtEur0)} all'anno (${g} giorni)`;
-    if (Math.abs(d) < 0.005) {
-      $("#k-verdict").textContent = "I due scenari si equivalgono";
-      $("#k-verdict-sub").textContent = "Punto di pareggio raggiunto";
-    } else {
-      const one = d > 0;
-      $("#k-verdict").textContent = one
-        ? "Conviene un solo veicolo"
-        : "Conviene usare due veicoli";
-      const risp = (Math.abs(d) / Math.max(s1.totale, s2.totale)) * 100;
-      $("#k-verdict-sub").textContent =
-        `Risparmio del ${fmtNum(risp)}% · i due furgoni finiscono ${hhmm(Math.max(0, s1.durata - s2.durata))} prima`;
-    }
-  }
+  const convieneUnVeicolo = differenza > 0;
+  $("#k-verdict").textContent = convieneUnVeicolo
+    ? "Conviene un solo veicolo"
+    : "Conviene usare due veicoli";
+
+  const percentualeRisparmio =
+    (Math.abs(differenza) / Math.max(scenario1.totale, scenario2.totale)) * 100;
+  const anticipoDueVeicoli = Math.max(0, scenario1.durata - scenario2.durata);
+  $("#k-verdict-sub").textContent =
+    `Risparmio del ${formattaNumero(percentualeRisparmio)}% · ` +
+    `i due furgoni finiscono ${formattaDurata(anticipoDueVeicoli)} prima`;
+}
